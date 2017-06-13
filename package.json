@@ -1,0 +1,33 @@
+{
+  "name": "passwordping",
+  "version": "1.0.0",
+  "description": "JavaScript library for PasswordPing API",
+  "main": "passwordping.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PasswordPing/passwordping-javascript-client.git"
+  },
+  "keywords": [
+    "passwordping"
+  ],
+  "author": "PasswordPing",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PasswordPing/passwordping-javascript-client/issues"
+  },
+  "homepage": "https://github.com/PasswordPing/passwordping-javascript-client#readme",
+  "dependencies": {
+    "argon2": "0.15.0",
+    "bcrypt-nodejs": "0.0.3",
+    "bitwise-xor": "0.0.0",
+    "crc-32": "^1.0.2",
+    "nano-md5": "^1.0.3"
+  },
+  "devDependencies": {
+    "chai": "^4.0.2",
+    "mocha": "^3.4.2"
+  }
+}
