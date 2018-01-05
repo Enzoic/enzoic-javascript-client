@@ -16,7 +16,7 @@ $ npm install passwordping
 
 ## API Overview
 
-Here's the API in a nutshell.
+Below is some simple example code which demonstrates the usage of the API. 
 
 ```js
 var PasswordPing = require('passwordping');
@@ -56,7 +56,7 @@ passwordping.getExposuresForUser('test@passwordping.com', function(error, result
         console.log('Error calling API: ' + error);
     }
     else {
-        console.log(exposures.count + ' exposures found for test@passwordping.com');
+        console.log(result.exposures.count + ' exposures found for test@passwordping.com');
 
         // now get the full details for the first exposure returned in the list
         passwordping.getExposureDetails(result.exposures[0], function(error, exposureDetails) {
@@ -68,6 +68,130 @@ passwordping.getExposuresForUser('test@passwordping.com', function(error, result
             }
         });
     }
+});
+
+// SHA256 hashes of a couple of email addresses
+var arrUsernameSHA256Hashes = [
+    'd56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351e', 
+    '006ddca2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44356e'
+];
+
+// subscribe for alerts for these users
+passwordping.addUserAlertSubscriptions(arrUsernameSHA256Hashes, function(error, addResponse) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       console.log('New subscriptions added: ' + addResponse.added + '\n' + 
+            'Subscriptions already existing: ' + addResponse.alreadyExisted);
+   }
+});
+
+// delete subscriptions for these users
+passwordping.deleteUserAlertSubscriptions(arrUsernameSHA256Hashes, function(error, deleteResponse) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       console.log('Subscriptions deleted: ' + deleteResponse.deleted + '\n' + 
+            'Subscriptions not found: ' + deleteResponse.notFound);
+   }
+});
+
+// check whether a user is already subscribed
+passwordping.isUserSubscribedForAlerts(arrUsernameSHA256Hashes[0], function(error, subscribed) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else if (subscribed === true) {
+       console.log('User already subscribed');
+   }
+   else {
+       console.log('User not already subscribed');
+   }    
+});
+
+// get all users subscribed for alerts on this account 
+// returns paged results per https://www.passwordping.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions
+passwordping.getUserAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, function (error, subscriptionsResponse) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       // print first page of results
+       for (var i = 0; i < subscriptionsResponse.usernameHashes.length; i++) {
+           console.log('Username Hash: ' + subscriptionsResponse.usernameHashes[i] + '\n');
+       }
+       
+       // if pagingToken present, get next page of results
+       if (subscriptionsResponse.pagingToken) {
+            passwordping.getUserAlertSubscriptions(4, subscriptionsResponse.pagingToken, function (error, secondPageResponse) {
+                // process second page of results, etc.
+            });   
+       }
+   }    
+});
+
+// test domains for alert subscriptions
+var arrDomains = [
+    'testdomain1.com', 
+    'testdomain2.com' 
+];
+
+// subscribe for alerts for these domains
+passwordping.addDomainAlertSubscriptions(arrDomains, function(error, addResponse) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       console.log('New subscriptions added: ' + addResponse.added + '\n' + 
+            'Subscriptions already existing: ' + addResponse.alreadyExisted);
+   }
+});
+
+// delete subscriptions for these domains
+passwordping.deleteDomainAlertSubscriptions(arrDomains, function(error, deleteResponse) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       console.log('Subscriptions deleted: ' + deleteResponse.deleted + '\n' + 
+            'Subscriptions not found: ' + deleteResponse.notFound);
+   }
+});
+
+// check whether a domain is already subscribed
+passwordping.isDomainSubscribedForAlerts(arrDomains[0], function(error, subscribed) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else if (subscribed === true) {
+       console.log('Domain already subscribed');
+   }
+   else {
+       console.log('Domain not already subscribed');
+   }    
+});
+
+// get all users subscribed for alerts on this account 
+// returns pages results per https://www.passwordping.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions-domains
+passwordping.getDomainAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, function (error, subscriptionsResponse) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       // print first page of results
+       for (var i = 0; i < subscriptionsResponse.domains.length; i++) {
+           console.log('Domain: ' + subscriptionsResponse.domains[i] + '\n');
+       }
+       
+       // if pagingToken present, get next page of results
+       if (subscriptionsResponse.pagingToken) {
+            passwordping.getDomainAlertSubscriptions(4, subscriptionsResponse.pagingToken, function (error, secondPageResponse) {
+                // process second page of results, etc.
+            });   
+       }
+   }    
 });
 
 ```

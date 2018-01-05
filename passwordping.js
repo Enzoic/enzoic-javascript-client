@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 var https = require('https');
 var Hashing = require('./src/hashing');
@@ -148,22 +148,172 @@ PasswordPing.prototype.getExposureDetails = function(sExposureID, fnCallback) {
     });
 };
 
+PasswordPing.prototype.addUserAlertSubscriptions = function(arrUsernameHashes, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        usernameHashes: arrUsernameHashes
+    };
+
+    this.makeRestCall(path, '', 'POST', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.deleteUserAlertSubscriptions = function(arrUsernameHashes, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        usernameHashes: arrUsernameHashes
+    };
+
+    this.makeRestCall(path, '', 'DELETE', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.getUserAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var queryString = '';
+
+    if (iPageSize) {
+        queryString += 'pageSize=' + iPageSize;
+    }
+
+    if (sPagingToken) {
+        if (queryString != '') queryString += '&';
+        queryString += 'pagingToken=' + sPagingToken;
+    }
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.isUserSubscribedForAlerts = function(sUsernameHash, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    this.makeRestCall(path, 'usernameHash=' + sUsernameHash, 'GET', null, function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else if (response === 404) {
+            fnCallback(null, false);
+        }
+        else {
+            fnCallback(null, true);
+        }
+    });
+};
+
+PasswordPing.prototype.addDomainAlertSubscriptions = function(arrDomains, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        domains: arrDomains
+    };
+
+    this.makeRestCall(path, '', 'POST', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.deleteDomainAlertSubscriptions = function(arrDomains, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        domains: arrDomains
+    };
+
+    this.makeRestCall(path, '', 'DELETE', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.getDomainAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var queryString = 'domains=1&';
+
+    if (iPageSize) {
+        queryString += 'pageSize=' + iPageSize;
+    }
+
+    if (sPagingToken) {
+        if (queryString != '') queryString += '&';
+        queryString += 'pagingToken=' + sPagingToken;
+    }
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.isDomainSubscribedForAlerts = function(sDomain, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    this.makeRestCall(path, 'domain=' + sDomain, 'GET', null, function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else if (response === 404) {
+            fnCallback(null, false);
+        }
+        else {
+            fnCallback(null, true);
+        }
+    });
+};
+
 PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBody, fnCallback) {
 
     var options = {
         agent: false,
         host: this.host,
-        path: sPath + '?' + sQueryString,
+        path: sPath + (sQueryString ? '?' + sQueryString : ''),
         method: sMethod,
         headers: {
-            'authorization': 'basic ' + this.authString
+            'authorization': 'basic ' + this.authString,
+            'content-length': sBody ? sBody.length : 0,
+            'content-type': 'application/json'
         }
     };
 
     var req = https.request(options, function (res) {
         res.setEncoding('utf8');
 
-        if (res.statusCode === 200) {
+        if (res.statusCode === 200 || res.statusCode === 201) {
             var responseData = '';
 
             res.on('data', function (chunk) {
@@ -186,7 +336,7 @@ PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBo
         fnCallback('Unexpected error calling PasswordPing API: ' + e.message);
     });
 
-    if (sMethod === 'POST' || sMethod === 'PUT') {
+    if (sMethod === 'POST' || sMethod === 'PUT' || sMethod === 'DELETE') {
         req.write(sBody);
     }
 
@@ -271,6 +421,7 @@ PasswordPing.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSa
             break;
         case PasswordType.SHA512:
             fnCallback(null, Hashing.sha512(sPassword));
+            break;
         case PasswordType.MD5Crypt:
             if (checkSalt(sSalt)) {
                 fnCallback(null, Hashing.md5Crypt(sPassword, sSalt));
