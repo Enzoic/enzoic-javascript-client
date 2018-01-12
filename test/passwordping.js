@@ -127,6 +127,153 @@ describe('PasswordPing', function() {
         });
     });
 
+    describe('#getExposedUsersForDomain()', function(done) {
+        var passwordping = getPasswordPing();
+        var pagingToken = null;
+
+        it('gets correct result', function(done) {
+            passwordping.getExposedUsersForDomain('email.tst', 2, null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(12);
+                expect(result.users.length).to.equal(2);
+                expect(result.users).to.deep.equal([
+                    {
+                        "username": "sample@email.tst",
+                        "exposures": [
+                            "57dc11964d6db21300991b78",
+                            "5805029914f33808dc802ff7",
+                            "57ffcf3c1395c80b30dd4429",
+                            "598e5b844eb6d82ea07c5783",
+                            "59bbf691e5017d2dc8a96eab",
+                            "59bc2016e5017d2dc8bdc36a",
+                            "59bebae9e5017d2dc85fc2ab",
+                            "59f36f8c4eb6d85ba0bee09c"
+                        ]
+                    },
+                    {
+                        "username": "xxxxxxxxxx@email.tst",
+                        "exposures": [
+                            "5805029914f33808dc802ff7"
+                        ]
+                    }
+                ]);
+                expect(result.pagingToken).to.not.equal(null);
+                pagingToken = result.pagingToken;
+                done();
+            });
+        });
+
+        it('gets correct result for subsequent page', function(done) {
+            expect(pagingToken).to.not.equal(null);
+
+            passwordping.getExposedUsersForDomain('email.tst', 2, pagingToken, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(12);
+                expect(result.users.length).to.equal(2);
+                expect(result.users).to.deep.equal([
+                    {
+                        "username": "cbeiqvf@email.tst",
+                        "exposures": [
+                            "5805029914f33808dc802ff7"
+                        ]
+                    },
+                    {
+                        "username": "yjybey@email.tst",
+                        "exposures": [
+                            "5805029914f33808dc802ff7"
+                        ]
+                    }
+                ]);
+                done();
+            });
+        });
+
+        it('handles negative result correctly', function(done) {
+            passwordping.getExposedUsersForDomain('@@bogus-domain@@', 2, null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(0);
+                expect(result.users.length).to.equal(0);
+                done();
+            });
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com');
+
+            bogusServer.getExposedUsersForDomain('email.tst', 2, null, function (err, result) {
+                expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                done();
+            });
+        });
+    });
+
+    describe('#getExposuresForDomain()', function(done) {
+        var passwordping = getPasswordPing();
+
+        it('gets correct result for no details', function(done) {
+            passwordping.getExposuresForDomain('email.tst', false, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(8);
+                expect(result.exposures.length).to.equal(8);
+                expect(result.exposures).to.deep.equal([
+                    "59f36f8c4eb6d85ba0bee09c",
+                    "59bebae9e5017d2dc85fc2ab",
+                    "57dc11964d6db21300991b78",
+                    "59bc2016e5017d2dc8bdc36a",
+                    "598e5b844eb6d82ea07c5783",
+                    "5805029914f33808dc802ff7",
+                    "59bbf691e5017d2dc8a96eab",
+                    "57ffcf3c1395c80b30dd4429"
+                ]);
+                done();
+            });
+        });
+
+        it('gets correct result for include details', function(done) {
+            passwordping.getExposuresForDomain('email.tst', true, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(8);
+                expect(result.exposures.length).to.equal(8);
+                expect(result.exposures[0]).to.deep.equal(
+                    {
+                        "id": "57dc11964d6db21300991b78",
+                        "title": "funsurveys.net",
+                        "entries": 5123,
+                        "date": "2015-05-01T00:00:00.000Z",
+                        "category": "Surveys",
+                        "passwordType": "Cleartext",
+                        "exposedData": [
+                            "Emails",
+                            "Passwords"
+                        ],
+                        "dateAdded": "2016-09-16T15:36:54.000Z",
+                        "sourceURLs": [],
+                        "domainsAffected": 683
+                    }
+                );
+                done();
+            });
+        });
+
+        it('handles negative result correctly', function(done) {
+            passwordping.getExposuresForDomain('@@bogus-domain@@', false, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(0);
+                expect(result.exposures.length).to.equal(0);
+                done();
+            });
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com');
+
+            bogusServer.getExposuresForDomain('email.tst', false, function (err, result) {
+                expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                done();
+            });
+        });
+    });
+
     describe('#getExposureDetails()', function() {
         var passwordping = getPasswordPing();
 

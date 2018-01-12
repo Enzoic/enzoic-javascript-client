@@ -70,6 +70,41 @@ passwordping.getExposuresForUser('test@passwordping.com', function(error, result
     }
 });
 
+// get all exposures for a given domain - second parameter indicates whether to include exposure details in results
+passwordping.getExposuresForDomain('passwordping.com', true, function(error, result) {
+    if (error) {
+        console.log('Error calling API: ' + error);
+    }
+    else {
+        console.log(result.exposures.count + ' exposures found for passwordping.com');
+        
+        if (result.exposures.count > 0) {
+            console.log('First exposure for passwordping.com was ' + result.exposures[0].title);
+        }
+    }
+});
+
+// get all users exposed for a given domain
+// returns paged results per https://www.passwordping.com/docs-exposures-api/#get-exposed-users-for-domain
+passwordping.getExposedUsersForDomain('passwordping.com', 20, null, function (error, exposedUsers) {
+   if (error) {
+       console.log('Error calling API: ' + error);
+   } 
+   else {
+       // print first page of results
+       for (var i = 0; i < exposedUsers.users.length; i++) {
+           console.log('Exposed User: ' + exposedUsers.users[i].username + '\n');
+       }
+       
+       // if pagingToken present, get next page of results
+       if (exposedUsers.pagingToken) {
+            passwordping.getExposedUsersForDomain('passwordping.com', 20, exposedUsers.pagingToken, function (error, secondPageResponse) {
+                // process second page of results, etc.
+            });   
+       }
+   }    
+});
+
 // SHA256 hashes of a couple of email addresses
 var arrUsernameSHA256Hashes = [
     'd56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351e', 

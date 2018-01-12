@@ -132,6 +132,64 @@ PasswordPing.prototype.getExposuresForUser = function(sUsername, fnCallback) {
     });
 };
 
+PasswordPing.prototype.getExposedUsersForDomain = function (sDomain, iPageSize, sPagingToken, fnCallback) {
+    var path = '/v1/exposures';
+
+    var queryString = 'accountDomain=' + sDomain;
+
+    if (iPageSize) {
+        queryString += '&pageSize=' + iPageSize;
+    }
+
+    if (sPagingToken) {
+        queryString += '&pagingToken=' + sPagingToken;
+    }
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else if (response === 404) {
+            // don't have this email in the DB - return empty response
+            fnCallback(null, {
+                count: 0,
+                users: []
+            });
+        }
+        else {
+            fnCallback(null, response);
+        }
+
+    });
+};
+
+PasswordPing.prototype.getExposuresForDomain = function (sDomain, bIncludeExposureDetails, fnCallback) {
+    var path = '/v1/exposures';
+
+    var queryString = 'domain=' + sDomain;
+
+    if (bIncludeExposureDetails === true) {
+        queryString += '&includeExposureDetails=1';
+    }
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else if (response === 404) {
+            // don't have this domain in the DB - return empty response
+            fnCallback(null, {
+                count: 0,
+                exposures: []
+            });
+        }
+        else {
+            fnCallback(null, response);
+        }
+
+    });
+};
+
 PasswordPing.prototype.getExposureDetails = function(sExposureID, fnCallback) {
     var path = '/v1/exposures';
 
