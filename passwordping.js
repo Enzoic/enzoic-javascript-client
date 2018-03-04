@@ -21,10 +21,17 @@ function PasswordPing(sAPIKey, sSecret, sBaseAPIHost) {
     }
 }
 
-PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallback) {
+PasswordPing.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, fnCallback) {
     var accountsPath = '/v1/accounts';
     var credentialsPath = '/v1/credentials';
     var me = this;
+
+    var excludeHashAlgorithms = (oOptions && oOptions.excludeHashAlgorithms)
+        ? oOptions.excludeHashAlgorithms
+        : [];
+    var lastCheckDate = (oOptions && oOptions.lastCheckDate)
+        ? oOptions.lastCheckDate
+        : new Date('1980-01-01');
 
     this.makeRestCall(accountsPath, 'username=' + Hashing.sha256(sUsername), 'GET', null, function (err, accountResponse) {
         if (err) {
@@ -34,6 +41,15 @@ PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallb
             fnCallback(null, false);
         }
         else {
+            // first check the date threshold
+            if (new Date(accountResponse.lastBreachDate) <= lastCheckDate)
+            {
+                // if we checked these credentials after the date of the last breach in the PasswordPing system,
+                // bail out and return false
+                fnCallback(null, false);
+                return;
+            }
+
             var hashesRequired = accountResponse.passwordHashesRequired;
 
             var bcryptCount = 0;
@@ -43,10 +59,16 @@ PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallb
             for (var i = 0; i < hashesRequired.length; i++) {
                 var hashSpec = hashesRequired[i];
 
+                if (excludeHashAlgorithms.indexOf(hashSpec.hashType) >= 0)
+                {
+                    // skip this one if user chose to exclude this type
+                    continue;
+                }
+
                 // bcrypt gets far too expensive for good response time if there are many of them to calculate.
                 // some mostly garbage accounts have accumulated a number of them in our DB and if we happen to hit one it
                 // kills performance, so short circuit out after at most 2 BCrypt hashes
-                if (hashSpec.hashType != PasswordType.BCrypt || bcryptCount <= 2) {
+                if (hashSpec.hashType !== PasswordType.BCrypt || bcryptCount <= 2) {
                     if (hashSpec.hashType === PasswordType.BCrypt) {
                         bcryptCount++;
                     }
@@ -60,36 +82,44 @@ PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallb
             }
 
             // wait for all the credential hash calculations to finish
-            Promise.all(credentialHashCalcs).then(values => {
-                // build the query string for the credentials call
-                for (var i = 0; i < values.length; i++) {
-                    if (values[i]) {
-                        if (queryString.length === 0) {
-                            queryString += "hashes=" + values[i];
-                        }
-                        else {
-                            queryString += "&hashes=" + values[i];
+            Promise.all(credentialHashCalcs)
+                .then(values => {
+                    // build the query string for the credentials call
+                    for (var i = 0; i < values.length; i++) {
+                        if (values[i]) {
+                            if (queryString.length === 0) {
+                                queryString += "hashes=" + values[i];
+                            }
+                            else {
+                                queryString += "&hashes=" + values[i];
+                            }
                         }
                     }
-                }
 
-                if (queryString.length > 0) {
-                    // make the credentials call
-                    me.makeRestCall(credentialsPath, queryString, "GET", null, function(err, credsResponse) {
-                        if (err) {
-                            fnCallback(err, null);
-                        }
-                        else {
-                            fnCallback(null, credsResponse != 404);
-                        }
-                    });
-                }
-                else {
-                    fnCallback(null, false);
-                }
-            });
+                    if (queryString.length > 0) {
+                        // make the credentials call
+                        me.makeRestCall(credentialsPath, queryString, "GET", null, function (err, credsResponse) {
+                            if (err) {
+                                fnCallback(err, null);
+                            }
+                            else {
+                                fnCallback(null, credsResponse !== 404);
+                            }
+                        });
+                    }
+                    else {
+                        fnCallback(null, false);
+                    }
+                })
+                .catch((err) => {
+                    console.error('Error while calculating password hashes: ' + err);
+                });
         }
     });
+};
+
+PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallback) {
+    this.checkCredentialsEx(sUsername, sPassword, null, fnCallback);
 };
 
 PasswordPing.prototype.checkPassword = function(sPassword, fnCallback) {
@@ -407,7 +437,9 @@ PasswordPing.prototype.calcCredentialHash = function(sUsername, sPassword, sSalt
     return new Promise(function (fulfill, reject) {
         me.calcPasswordHash(oHashSpec.hashType, sPassword, oHashSpec.salt, function(err, passwordHash) {
             if (err) {
-                reject(err);
+                console.error('Error calculating password hash: ' + err);
+                //reject(err);
+                fulfill(null);
             }
             else {
                 Hashing.argon2(sUsername + "$" + passwordHash, sSalt, function(err, hashResult) {

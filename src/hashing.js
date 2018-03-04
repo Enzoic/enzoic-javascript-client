@@ -136,6 +136,10 @@ Hashing = {
         });
     },
 
+    customAlgorithm5: function(sPassword, sSalt, fnCallback) {
+        fnCallback(null, Hashing.sha256(Hashing.md5(sPassword + sSalt)));
+    },
+
     md5Crypt: function(sPassword, sSalt) {
         return md5crypt.crypt(sPassword, sSalt);
     },

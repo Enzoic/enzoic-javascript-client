@@ -1,5 +1,6 @@
 var expect = require('chai').expect;
 var PasswordPing = require('../passwordping.js');
+var PasswordType = require('../src/passwordtype.js');
 
 //
 // These are actually live tests and require a valid API key and Secret to be set in your environment variables.
@@ -66,6 +67,7 @@ describe('PasswordPing', function() {
     });
 
     describe('#checkCredentials()', function() {
+        this.timeout(10000);
         var passwordping = getPasswordPing();
 
        it('gets correct positive result', function(done) {
@@ -92,6 +94,57 @@ describe('PasswordPing', function() {
                 done();
             });
         });
+    });
+
+    describe('#checkCredentialsEx()', function() {
+        var passwordping = getPasswordPing();
+
+        it('gets correct positive result with no options', function(done) {
+            passwordping.checkCredentialsEx('testpwdpng445', 'testpwdpng4452', {}, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal(true);
+                done();
+            });
+        });
+
+        it('gets correct negative result with no options', function(done) {
+            passwordping.checkCredentialsEx('testpwdpng445', '123456122', {}, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal(false);
+                done();
+            });
+        });
+
+        it('handles errors properly with no options', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com');
+
+            bogusServer.checkCredentialsEx('testpwdpng445', '123456', {}, function (err, result) {
+                expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                done();
+            });
+        });
+
+        it('gets correct result with hash exclusion', function(done) {
+            // exclude the only hash type on this result
+            passwordping.checkCredentialsEx('testpwdpng445', 'testpwdpng4452', {
+                excludeHashAlgorithms: [7]
+            }, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal(false);
+                done();
+            });
+        });
+
+        it('gets correct result with last check date', function(done) {
+            passwordping.checkCredentialsEx('testpwdpng445', 'testpwdpng4452', {
+                lastCheckDate: new Date('2018-03-01')
+            }, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal(false);
+                done();
+            });
+        });
+
     });
 
     describe('#getExposuresForUser()', function(done) {
@@ -216,14 +269,14 @@ describe('PasswordPing', function() {
                 expect(result.count).to.equal(8);
                 expect(result.exposures.length).to.equal(8);
                 expect(result.exposures).to.deep.equal([
-                    "59f36f8c4eb6d85ba0bee09c",
-                    "59bebae9e5017d2dc85fc2ab",
                     "57dc11964d6db21300991b78",
-                    "59bc2016e5017d2dc8bdc36a",
-                    "598e5b844eb6d82ea07c5783",
+                    "57ffcf3c1395c80b30dd4429",
                     "5805029914f33808dc802ff7",
+                    "598e5b844eb6d82ea07c5783",
                     "59bbf691e5017d2dc8a96eab",
-                    "57ffcf3c1395c80b30dd4429"
+                    "59bc2016e5017d2dc8bdc36a",
+                    "59bebae9e5017d2dc85fc2ab",
+                    "59f36f8c4eb6d85ba0bee09c"
                 ]);
                 done();
             });
