@@ -973,6 +973,118 @@ describe('PasswordPing', function() {
                 done();
             });
         });
+
+        it('CustomAlgorithm5 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.CustomAlgorithm5, 'password', '123456', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('69e7ade919a318d8ecf6fd540bad9f169bce40df4cae4ac1fb6be2c48c514163');
+                done();
+            });
+        });
+
+        it('DESCrypt works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.DESCrypt, 'password', 'X.', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('X.OPW8uuoq5N.');
+                done();
+            });
+        });
+
+        it('MySQLPre4_1 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.MySQLPre4_1, 'password', null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('5d2e19393cc5ef67');
+                done();
+            });
+        });
+
+        it('MySQLPost4_1 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.MySQLPost4_1, 'test', null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('*94bdcebe19083ce2a1f959fd02f964c7af4cfc29');
+                done();
+            });
+        });
+
+        it('PeopleSoft works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.PeopleSoft, 'TESTING', null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('3weP/BR8RHPLP2459h003IgJxyU=');
+                done();
+            });
+        });
+
+        it('PunBB works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.PunBB, 'password', '123', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('0c9a0dc3dd0b067c016209fd46749c281879069e');
+                done();
+            });
+        });
+
+        it('CustomAlgorithm6 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.CustomAlgorithm6, 'password', '123', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('cbfdac6008f9cab4083784cbd1874f76618d2a97');
+                done();
+            });
+        });
+
+        it('PartialMD5_20 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.PartialMD5_20, 'password', null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('5f4dcc3b5aa765d61d83');
+                done();
+            });
+        });
+
+        it('AVE_DataLife_Diferior works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.AVE_DataLife_Diferior, 'password', null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('696d29e0940a4957748fe3fc9efd22a3');
+                done();
+            });
+        });
+
+        it('DjangoMD5 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.DjangoMD5, 'password', 'c6218', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('md5$c6218$346abd81f2d88b4517446316222f4276');
+                done();
+            });
+        });
+
+        it('DjangoSHA1 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.DjangoSHA1, 'password', 'c6218', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('sha1$c6218$161d1ac8ab38979c5a31cbaba4a67378e7e60845');
+                done();
+            });
+        });
+
+        it('PartialMD5_29 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.PartialMD5_29, 'password', null, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('5f4dcc3b5aa765d61d8327deb882c');
+                done();
+            });
+        });
+
+        it('PliggCMS works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.PliggCMS, 'password', '123', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('1230de084f38ace8e3d82597f55cc6ad5d6001568e6');
+                done();
+            });
+        });
+
+        it('RunCMS_SMF1_1 works', function(done) {
+            passwordping.calcPasswordHash(PasswordType.RunCMS_SMF1_1, 'password', '123', function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal('0de084f38ace8e3d82597f55cc6ad5d6001568e6');
+                done();
+            });
+        });
     });
 });
 

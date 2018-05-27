@@ -88,9 +88,81 @@ describe("Hashing", function() {
         });
     });
 
+    describe("#customAlgorithm5()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.customAlgorithm5("password", "123456")).to.equal("69e7ade919a318d8ecf6fd540bad9f169bce40df4cae4ac1fb6be2c48c514163"); // TODO: verify
+        });
+    });
+
     describe("#md5Crypt()", function() {
         it("generates a correct hash", function() {
             expect(Hashing.md5Crypt("123456", "$1$4d3c09ea")).to.equal("$1$4d3c09ea$hPwyka2ToWFbLTOq.yFjf.");
+        });
+    });
+
+    describe("#desCrypt()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.desCrypt("password", "X.")).to.equal("X.OPW8uuoq5N.");
+        });
+    });
+
+    describe("#mySqlPre4_1()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.mySqlPre4_1("password")).to.equal("5d2e19393cc5ef67");
+        });
+    });
+
+    describe("#mySqlPost4_1()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.mySqlPost4_1("test")).to.equal("*94bdcebe19083ce2a1f959fd02f964c7af4cfc29");
+        });
+    });
+
+    describe("#peopleSoft()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.peopleSoft("TESTING")).to.equal("3weP/BR8RHPLP2459h003IgJxyU=");
+        });
+    });
+
+    describe("#punBB()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.punBB("password", "123")).to.equal("0c9a0dc3dd0b067c016209fd46749c281879069e"); // TODO: verify
+        });
+    });
+
+    describe("#customAlgorithm6()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.customAlgorithm6("password", "123")).to.equal("cbfdac6008f9cab4083784cbd1874f76618d2a97"); // TODO: verify
+        });
+    });
+
+    describe("#djangoMD5()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.djangoMD5("password", "c6218")).to.equal("md5$c6218$346abd81f2d88b4517446316222f4276");
+        });
+    });
+
+    describe("#djangoSHA1()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.djangoSHA1("password", "c6218")).to.equal("sha1$c6218$161d1ac8ab38979c5a31cbaba4a67378e7e60845");
+        });
+    });
+
+    describe("#ave_DataLife_Diferior()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.ave_DataLife_Diferior("password")).to.equal("696d29e0940a4957748fe3fc9efd22a3"); // TODO: verify
+        });
+    });
+
+    describe("#pliggCMS()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.pliggCMS("password", "123")).to.equal("1230de084f38ace8e3d82597f55cc6ad5d6001568e6"); // TODO: verify
+        });
+    });
+
+    describe("#runCMS_SMF1_1()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.runCMS_SMF1_1("password", "123")).to.equal("0de084f38ace8e3d82597f55cc6ad5d6001568e6"); // TODO: verify
         });
     });
 

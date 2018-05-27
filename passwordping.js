@@ -88,10 +88,10 @@ PasswordPing.prototype.checkCredentialsEx = function(sUsername, sPassword, oOpti
                     for (var i = 0; i < values.length; i++) {
                         if (values[i]) {
                             if (queryString.length === 0) {
-                                queryString += "hashes=" + values[i];
+                                queryString += "partialHashes=" + values[i].substr(0, 10);
                             }
                             else {
-                                queryString += "&hashes=" + values[i];
+                                queryString += "&partialHashes=" + values[i].substr(0, 10);
                             }
                         }
                     }
@@ -103,7 +103,17 @@ PasswordPing.prototype.checkCredentialsEx = function(sUsername, sPassword, oOpti
                                 fnCallback(err, null);
                             }
                             else {
-                                fnCallback(null, credsResponse !== 404);
+                                if (credsResponse !== 404) {
+                                    // compare the candidate results to the local full hashes
+                                    for (let i = 0; i < credsResponse.candidateHashes.length; i++) {
+                                        if (values.indexOf(credsResponse.candidateHashes[i]) >= 0) {
+                                            fnCallback(null, true);
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                fnCallback(null, false);
                             }
                         });
                     }
@@ -124,16 +134,29 @@ PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallb
 
 PasswordPing.prototype.checkPassword = function(sPassword, fnCallback) {
     var path = '/v1/passwords';
-    var queryString = 'md5=' + Hashing.md5(sPassword) +
-        '&sha1=' + Hashing.sha1(sPassword) +
-        '&sha256=' + Hashing.sha256(sPassword);
+    var md5 = Hashing.md5(sPassword);
+    var sha1 = Hashing.sha1(sPassword);
+    var sha256 = Hashing.sha256(sPassword);
+    var queryString = 'partial_md5=' + md5.substr(0, 10) +
+        '&partial_sha1=' + sha1.substr(0, 10) +
+        '&partial_sha256=' + sha256.substr(0, 10);
 
     this.makeRestCall(path, queryString, 'GET', null, function(err, result) {
         if (err) {
             fnCallback(err, null);
         }
         else if (typeof(result) === 'object') {
-            fnCallback(null, true);
+            // loop through and see if we have a match
+            for (var i = 0; i < result.candidates.length; i++) {
+                if (result.candidates[i].md5 === md5 ||
+                    result.candidates[i].sha1 === sha1 ||
+                    result.candidates[i].sha256 === sha256) {
+                    fnCallback(null, true);
+                    return;
+                }
+            }
+
+            fnCallback(null, false);
         }
         else if (result === 404) {
             fnCallback(null, false);
@@ -438,7 +461,6 @@ PasswordPing.prototype.calcCredentialHash = function(sUsername, sPassword, sSalt
         me.calcPasswordHash(oHashSpec.hashType, sPassword, oHashSpec.salt, function(err, passwordHash) {
             if (err) {
                 console.error('Error calculating password hash: ' + err);
-                //reject(err);
                 fulfill(null);
             }
             else {
@@ -494,6 +516,7 @@ PasswordPing.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSa
             break;
         case PasswordType.CRC32:
             fnCallback(null, Hashing.crc32(sPassword));
+            break;
         case PasswordType.PHPBB3:
             if (checkSalt(sSalt)) {
                 fnCallback(null, Hashing.phpbb3(sPassword, sSalt));
@@ -520,6 +543,69 @@ PasswordPing.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSa
         case PasswordType.CustomAlgorithm4:
             if (checkSalt(sSalt)) {
                 Hashing.customAlgorithm4(sPassword, sSalt, fnCallback);
+            }
+            break;
+        case PasswordType.CustomAlgorithm5:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.customAlgorithm5(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.osCommerce_AEF:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.osCommerce_AEF(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.DESCrypt:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.desCrypt(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.MySQLPre4_1:
+            fnCallback(null, Hashing.mySqlPre4_1(sPassword));
+            break;
+        case PasswordType.MySQLPost4_1:
+            fnCallback(null, Hashing.mySqlPost4_1(sPassword));
+            break;
+        case PasswordType.PeopleSoft:
+            fnCallback(null, Hashing.peopleSoft(sPassword));
+            break;
+        case PasswordType.PunBB:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.punBB(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.CustomAlgorithm6:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.customAlgorithm6(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.PartialMD5_20:
+            fnCallback(null, Hashing.md5(sPassword).substr(0, 20));
+            break;
+        case PasswordType.PartialMD5_29:
+            fnCallback(null, Hashing.md5(sPassword).substr(0, 29));
+            break;
+        case PasswordType.AVE_DataLife_Diferior:
+            fnCallback(null, Hashing.ave_DataLife_Diferior(sPassword));
+            break;
+        case PasswordType.DjangoMD5:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.djangoMD5(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.DjangoSHA1:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.djangoSHA1(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.PliggCMS:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.pliggCMS(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.RunCMS_SMF1_1:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.runCMS_SMF1_1(sPassword, sSalt));
             }
             break;
         default:

@@ -4,6 +4,7 @@ var argon2 = require('argon2');
 var crc32 = require('crc-32');
 var xor = require('bitwise-xor');
 var md5crypt = require('nano-md5');
+var descrypt = require('./descrypt');
 
 Hashing = {
     md5: function(sToHash, bBinary) {
@@ -13,8 +14,11 @@ Hashing = {
             return crypto.createHash('md5').update(sToHash).digest("hex");
     },
 
-    sha1: function(sToHash) {
-        return crypto.createHash('sha1').update(sToHash).digest("hex");
+    sha1: function(sToHash, bBinary) {
+        if (bBinary === true)
+            return crypto.createHash('sha1').update(sToHash).digest("");
+        else
+            return crypto.createHash('sha1').update(sToHash).digest("hex");
     },
 
     sha256: function(sToHash) {
@@ -136,12 +140,88 @@ Hashing = {
         });
     },
 
-    customAlgorithm5: function(sPassword, sSalt, fnCallback) {
-        fnCallback(null, Hashing.sha256(Hashing.md5(sPassword + sSalt)));
+    customAlgorithm5: function(sPassword, sSalt) {
+        return this.sha256(this.md5(sPassword + sSalt));
+    },
+
+    osCommerce_AEF: function(sPassword, sSalt) {
+        return this.md5(sSalt + sPassword);
+    },
+
+    desCrypt: function(sPassword, sSalt) {
+        return descrypt(sPassword, sSalt);
     },
 
     md5Crypt: function(sPassword, sSalt) {
         return md5crypt.crypt(sPassword, sSalt);
+    },
+
+    mySqlPre4_1: function(sPassword) {
+        var result1;
+        var result2;
+        var nr = 1345345333;
+        var add = 7;
+        var nr2 = 0x12345671;
+        var tmp;
+
+        for (var i = 0; i < sPassword.length; i++) {
+            var c = sPassword.charCodeAt(i);
+            if (c === ' ' || c === '\t') {
+                continue;
+            }
+
+            tmp = c;
+            nr = nr ^ ((((nr & 63) + add) * tmp) + ((nr << 8) >>> 0));
+            nr2 += ((nr2 << 8) >>> 0) ^ nr;
+            add += tmp;
+        }
+
+        result1 = nr & (((1<<31)>>>0) - 1);
+        result2 = nr2 & (((1<<31)>>>0) - 1);
+
+        return this.intToHex(result1) + this.intToHex(result2);
+    },
+
+    mySqlPost4_1: function(sPassword) {
+        return "*" + this.sha1(this.sha1(sPassword, true));
+    },
+
+    peopleSoft: function(sPassword) {
+        var buf = new ArrayBuffer(sPassword.length*2);
+        var bufView = new Uint16Array(buf);
+        for (var i=0, strLen=sPassword.length; i < strLen; i++) {
+            bufView[i] = sPassword.charCodeAt(i);
+        }
+
+        return new Buffer(crypto.createHash('sha1').update(new Buffer(buf)).digest("")).toString("base64");
+    },
+
+    punBB: function(sPassword, sSalt) {
+        return this.sha1(sSalt + this.sha1(sPassword));
+    },
+
+    customAlgorithm6: function(sPassword, sSalt) {
+        return this.sha1(sPassword + sSalt);
+    },
+
+    ave_DataLife_Diferior: function(sPassword) {
+        return this.md5(this.md5(sPassword));
+    },
+
+    djangoMD5: function(sPassword, sSalt) {
+        return "md5$" + sSalt + "$" + this.md5(sSalt + sPassword);
+    },
+
+    djangoSHA1: function(sPassword, sSalt) {
+        return "sha1$" + sSalt + "$" + this.sha1(sSalt + sPassword);
+    },
+
+    pliggCMS: function(sPassword, sSalt) {
+        return sSalt + this.sha1(sSalt + sPassword);
+    },
+
+    runCMS_SMF1_1: function(sPassword, sSalt) {
+        return this.sha1(sSalt + sPassword);
     },
 
     argon2: function(sToHash, sSalt, fnCallback) {
