@@ -225,10 +225,9 @@ Hashing = {
     },
 
     argon2: function(sToHash, sSalt, fnCallback) {
-
         var hashType = argon2.argon2d;
         var tCost = 3;
-        var mCost = 10;
+        var mCost = 1024;
         var threads = 2;
         var hashLength = 20;
         var justSalt = sSalt;
@@ -253,7 +252,7 @@ Hashing = {
                                 tCost = intValue;
                                 break;
                             case 'm':
-                                mCost = Math.log2(intValue);
+                                mCost = intValue;
                                 break;
                             case 'l':
                                 hashLength = intValue;
@@ -267,7 +266,8 @@ Hashing = {
             }
         }
 
-        argon2.hash(sToHash, justSalt, {
+        argon2.hash(sToHash, {
+            salt: Buffer.from(justSalt),
             type: hashType,
             hashLength: hashLength,
             timeCost: tCost,
@@ -296,6 +296,6 @@ Hashing = {
         return hex;
     }
 
-}
+};
 
 module.exports = Hashing;

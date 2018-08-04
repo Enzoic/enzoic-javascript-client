@@ -145,6 +145,15 @@ describe('PasswordPing', function() {
             });
         });
 
+        it('gets correct result with last check date with different creds', function(done) {
+            passwordping.checkCredentialsEx('test@passwordping.com', '123456', {
+                lastCheckDate: new Date()
+            }, function(err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal(false);
+                done();
+            });
+        });
     });
 
     describe('#getExposuresForUser()', function(done) {

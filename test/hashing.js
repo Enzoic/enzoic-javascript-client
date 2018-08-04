@@ -94,6 +94,12 @@ describe("Hashing", function() {
         });
     });
 
+    describe("#osCommerce_AEF()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.osCommerce_AEF("password", "123")).to.equal("d2bc2f8d09990ebe87c809684fd78c66"); // TODO: verify
+        });
+    });
+
     describe("#md5Crypt()", function() {
         it("generates a correct hash", function() {
             expect(Hashing.md5Crypt("123456", "$1$4d3c09ea")).to.equal("$1$4d3c09ea$hPwyka2ToWFbLTOq.yFjf.");
