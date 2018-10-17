@@ -172,6 +172,17 @@ describe("Hashing", function() {
         });
     });
 
+    describe("#aes256Encrypt()", function() {
+        it("generates a correct value", function() {
+            Hashing.aes256Encrypt("password", "11111111111111111111111111111111", (err, encrypted) => {
+                expect(err).to.equal(null);
+                expect(encrypted.length).to.equal(32);
+                expect(/[0-9a-f]{32}/.test(encrypted)).to.equal(true);
+                done();
+            });
+        });
+    });
+
     describe("#argon2()", function() {
         it("generates a correct hash with plain salt and default params", function(done) {
             Hashing.argon2("123456", "saltysalt", function (err, hash) {

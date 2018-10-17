@@ -278,8 +278,8 @@ describe('PasswordPing', function() {
                 expect(result.count).to.equal(8);
                 expect(result.exposures.length).to.equal(8);
                 expect(result.exposures).to.deep.equal([
-                    "57dc11964d6db21300991b78",
                     "57ffcf3c1395c80b30dd4429",
+                    "57dc11964d6db21300991b78",
                     "5805029914f33808dc802ff7",
                     "598e5b844eb6d82ea07c5783",
                     "59bbf691e5017d2dc8a96eab",
@@ -1095,8 +1095,156 @@ describe('PasswordPing', function() {
             });
         });
     });
+
+    describe('#addCredentialsAlertSubscription()', function() {
+        var passwordping = getPasswordPing();
+
+        var username = 'test@passwordping.com';
+        var password = 'unittesttest';
+        var customData = 'TEST_DATA_123';
+
+        it('cleans up previous test data', function(done) {
+            passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    done();
+                }
+            );
+        });
+
+        it('gets correct result', function(done) {
+            passwordping.addCredentialsAlertSubscription(username, password, customData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(typeof(result.monitoredCredentialsID)).to.equal('string');
+                    expect(result.monitoredCredentialsID.length).to.equal(24);
+                    done();
+                }
+            );
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com', process.env.PP_ENC_KEY);
+
+            bogusServer.addCredentialsAlertSubscription(username, password, customData,
+                function (err, result) {
+                    expect(err).to.not.equal(null);
+                    expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('#deleteCredentialsAlertSubscriptions()', function() {
+        var passwordping = getPasswordPing();
+
+        var username = 'test@passwordping.com';
+        var password = 'unittesttest';
+        var customData = 'TEST_DATA_123';
+
+        var newID;
+        it('adds test data', function(done) {
+            passwordping.addCredentialsAlertSubscription(username, password, customData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(typeof(result.monitoredCredentialsID)).to.equal('string');
+                    expect(result.monitoredCredentialsID.length).to.equal(24);
+                    newID = result.monitoredCredentialsID;
+                    done();
+                }
+            );
+        });
+
+        it('gets correct result', function(done) {
+            passwordping.deleteCredentialsAlertSubscription(newID,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        deleted: 1,
+                        notFound: 0
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('gets correct repeated result', function(done) {
+            passwordping.deleteCredentialsAlertSubscription(newID,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        deleted: 0,
+                        notFound: 1
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com', process.env.PP_ENC_KEY);
+
+            bogusServer.deleteCredentialsAlertSubscription(newID,
+                function (err, result) {
+                    expect(err).to.not.equal(null);
+                    expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('#getCredentialsAlertSubscriptions()', function() {
+        var passwordping = getPasswordPing();
+
+        var username = 'test@passwordping.com';
+        var password = 'unittesttest';
+        var customData = 'TEST_DATA_123';
+
+        it('adds test data', function(done) {
+            passwordping.addCredentialsAlertSubscription(username, password, customData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(typeof(result.monitoredCredentialsID)).to.equal('string');
+                    expect(result.monitoredCredentialsID.length).to.equal(24);
+                    done();
+                }
+            );
+        });
+
+        var response1;
+
+        it('gets correct result', function(done) {
+            passwordping.getCredentialsAlertSubscriptions(4, null,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result.count).to.greaterThan(1);
+                    expect(result.monitoredCredentials.length).to.equal(result.count);
+                    expect(result.pagingToken).to.not.equal(null);
+
+                    // save off result for next call
+                    response1 = result;
+
+                    done();
+                }
+            );
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com', process.env.PP_ENC_KEY);
+
+            bogusServer.getCredentialsAlertSubscriptions(4, null,
+                function (err, result) {
+                    expect(err).to.not.equal(null);
+                    expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                    done();
+                }
+            );
+        });
+    });
 });
 
 function getPasswordPing() {
-    return new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET);
+    return new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, null, process.env.PP_ENC_KEY);
 }

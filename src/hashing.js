@@ -294,8 +294,28 @@ Hashing = {
         }
 
         return hex;
-    }
+    },
 
+    aes256Encrypt: function(sToEncrypt, sKey, fnCallback) {
+        try {
+            crypto.randomBytes(8, (err, buf) => {
+                if (err) {
+                    fnCallback(err);
+                }
+                else {
+                    var iv = buf.toString('hex');
+                    var cipher = crypto.createCipheriv('aes256', sKey, iv);
+                    var encrypted = cipher.update(sToEncrypt, 'utf8', 'hex');
+                    encrypted += cipher.final('hex');
+
+                    fnCallback(null, iv + encrypted);
+                }
+            });
+        }
+        catch (err) {
+            fnCallback(err);
+        }
+    }
 };
 
 module.exports = Hashing;

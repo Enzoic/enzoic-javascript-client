@@ -4,10 +4,11 @@ var https = require('https');
 var Hashing = require('./src/hashing');
 var PasswordType = require('./src/passwordtype');
 
-function PasswordPing(sAPIKey, sSecret, sBaseAPIHost) {
+function PasswordPing(sAPIKey, sSecret, sBaseAPIHost, sEncryptionKey) {
     this.apiKey = sAPIKey;
     this.secret = sSecret;
     this.host = sBaseAPIHost;
+    this.encryptionKey = sEncryptionKey;
 
     if (!this.apiKey || !this.secret) {
         throw 'API key and Secret must be provided';
@@ -406,6 +407,86 @@ PasswordPing.prototype.isDomainSubscribedForAlerts = function(sDomain, fnCallbac
         }
     });
 };
+
+PasswordPing.prototype.addCredentialsAlertSubscription = function(sUsername, sPassword, sCustomData, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    Hashing.aes256Encrypt(sPassword, this.encryptionKey, (err, passwordCrypt) => {
+        var requestObject = {
+            usernameHash: Hashing.sha256(sUsername),
+            password: passwordCrypt,
+            customData: sCustomData
+        };
+
+        this.makeRestCall(path, '', 'POST', JSON.stringify(requestObject), function(err, response) {
+            if (err) {
+                fnCallback(err, null);
+            }
+            else {
+                fnCallback(null, response);
+            }
+        });
+    });
+};
+
+PasswordPing.prototype.deleteCredentialsAlertSubscription = function(sMonitoredCredentialsID, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        monitoredCredentialsID: sMonitoredCredentialsID
+    };
+
+    this.makeRestCall(path, '', 'DELETE', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.deleteCredentialsAlertSubscriptionByCustomData = function(sCustomData, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        customData: sCustomData
+    };
+
+    this.makeRestCall(path, '', 'DELETE', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.getCredentialsAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var queryString = 'credentials=1';
+
+    if (iPageSize) {
+        queryString += 'pageSize=' + iPageSize;
+    }
+
+    if (sPagingToken) {
+        if (queryString != '') queryString += '&';
+        queryString += 'pagingToken=' + sPagingToken;
+    }
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
 
 PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBody, fnCallback) {
 
