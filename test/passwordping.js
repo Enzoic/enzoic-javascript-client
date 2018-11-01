@@ -1,6 +1,7 @@
 var expect = require('chai').expect;
 var PasswordPing = require('../passwordping.js');
 var PasswordType = require('../src/passwordtype.js');
+var Hashing = require('../src/hashing.js');
 
 //
 // These are actually live tests and require a valid API key and Secret to be set in your environment variables.
@@ -97,6 +98,8 @@ describe('PasswordPing', function() {
     });
 
     describe('#checkCredentialsEx()', function() {
+        this.timeout(10000);
+
         var passwordping = getPasswordPing();
 
         it('gets correct positive result with no options', function(done) {
@@ -162,10 +165,10 @@ describe('PasswordPing', function() {
         it('gets correct result', function(done) {
             passwordping.getExposuresForUser('eicar', function(err, result) {
                 expect(err).to.equal(null);
-                expect(result.count).to.equal(6);
-                expect(result.exposures.length).to.equal(6);
+                expect(result.count).to.equal(7);
+                expect(result.exposures.length).to.equal(7);
                 expect(result.exposures).to.deep.equal(["5820469ffdb8780510b329cc", "58258f5efdb8780be88c2c5d",
-                    "582a8e51fdb87806acc426ff", "583d2f9e1395c81f4cfa3479", "59ba1aa369644815dcd8683e", "59cae0ce1d75b80e0070957c"]);
+                    "582a8e51fdb87806acc426ff", "583d2f9e1395c81f4cfa3479", "59ba1aa369644815dcd8683e", "59cae0ce1d75b80e0070957c", "5bc64f5f4eb6d894f09eae70"]);
                 done();
             });
         });
@@ -209,7 +212,8 @@ describe('PasswordPing', function() {
                             "59bbf691e5017d2dc8a96eab",
                             "59bc2016e5017d2dc8bdc36a",
                             "59bebae9e5017d2dc85fc2ab",
-                            "59f36f8c4eb6d85ba0bee09c"
+                            "59f36f8c4eb6d85ba0bee09c",
+                            "5bcf9af3e5017d07201e2149"
                         ]
                     },
                     {
@@ -275,8 +279,8 @@ describe('PasswordPing', function() {
         it('gets correct result for no details', function(done) {
             passwordping.getExposuresForDomain('email.tst', false, function(err, result) {
                 expect(err).to.equal(null);
-                expect(result.count).to.equal(8);
-                expect(result.exposures.length).to.equal(8);
+                expect(result.count).to.equal(9);
+                expect(result.exposures.length).to.equal(9);
                 expect(result.exposures).to.deep.equal([
                     "57ffcf3c1395c80b30dd4429",
                     "57dc11964d6db21300991b78",
@@ -285,7 +289,8 @@ describe('PasswordPing', function() {
                     "59bbf691e5017d2dc8a96eab",
                     "59bc2016e5017d2dc8bdc36a",
                     "59bebae9e5017d2dc85fc2ab",
-                    "59f36f8c4eb6d85ba0bee09c"
+                    "59f36f8c4eb6d85ba0bee09c",
+                    "5bcf9af3e5017d07201e2149"
                 ]);
                 done();
             });
@@ -294,8 +299,8 @@ describe('PasswordPing', function() {
         it('gets correct result for include details', function(done) {
             passwordping.getExposuresForDomain('email.tst', true, function(err, result) {
                 expect(err).to.equal(null);
-                expect(result.count).to.equal(8);
-                expect(result.exposures.length).to.equal(8);
+                expect(result.count).to.equal(9);
+                expect(result.exposures.length).to.equal(9);
                 expect(result.exposures[0]).to.deep.equal(
                     {
                         "id": "57dc11964d6db21300991b78",
@@ -743,6 +748,8 @@ describe('PasswordPing', function() {
     });
 
     describe('#isDomainSubscribedForAlerts()', function() {
+        this.timeout(10000);
+
         var passwordping = getPasswordPing();
 
         var testDomain = 'testtestdomain1.com';
@@ -1099,9 +1106,14 @@ describe('PasswordPing', function() {
     describe('#addCredentialsAlertSubscription()', function() {
         var passwordping = getPasswordPing();
 
-        var username = 'test@passwordping.com';
+        var username = 'UNIT_TEST_addCredentialsAlertSubscription@passwordping.com';
         var password = 'unittesttest';
-        var customData = 'TEST_DATA_123';
+        var customData = 'UNIT_TEST_addCredentialsAlertSubscription';
+
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
 
         it('cleans up previous test data', function(done) {
             passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData,
@@ -1139,9 +1151,14 @@ describe('PasswordPing', function() {
     describe('#deleteCredentialsAlertSubscriptions()', function() {
         var passwordping = getPasswordPing();
 
-        var username = 'test@passwordping.com';
+        var username = 'UNIT_TEST_deleteCredentialsAlertSubscriptions@passwordping.com';
         var password = 'unittesttest';
-        var customData = 'TEST_DATA_123';
+        var customData = 'UNIT_TEST_deleteCredentialsAlertSubscriptions';
+
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
 
         var newID;
         it('adds test data', function(done) {
@@ -1198,9 +1215,14 @@ describe('PasswordPing', function() {
     describe('#getCredentialsAlertSubscriptions()', function() {
         var passwordping = getPasswordPing();
 
-        var username = 'test@passwordping.com';
+        var username = 'UNIT_TEST_getCredentialsAlertSubscriptions@passwordping.com';
         var password = 'unittesttest';
-        var customData = 'TEST_DATA_123';
+        var customData = 'UNIT_TEST_getCredentialsAlertSubscriptions';
+
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
 
         it('adds test data', function(done) {
             passwordping.addCredentialsAlertSubscription(username, password, customData,
@@ -1235,6 +1257,56 @@ describe('PasswordPing', function() {
             var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com', process.env.PP_ENC_KEY);
 
             bogusServer.getCredentialsAlertSubscriptions(4, null,
+                function (err, result) {
+                    expect(err).to.not.equal(null);
+                    expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('#getCredentialsAlertSubscriptionsForUser()', function() {
+        var passwordping = getPasswordPing();
+
+        var username = 'UNIT_TEST_getCredentialsAlertSubscriptionsForUser@passwordping.com';
+        var password = 'unittesttest';
+        var customData = 'UNIT_TEST_getCredentialsAlertSubscriptionsForUser';
+
+        // delete all test data instances
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+        passwordping.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {});
+
+        it('adds test data', function(done) {
+            passwordping.addCredentialsAlertSubscription(username, password, customData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(typeof(result.monitoredCredentialsID)).to.equal('string');
+                    expect(result.monitoredCredentialsID.length).to.equal(24);
+                    done();
+                }
+            );
+        });
+
+        it('gets correct result', function(done) {
+            passwordping.getCredentialsAlertSubscriptionsForUser(username,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result.count).to.equal(1);
+                    expect(result.monitoredCredentials.length).to.equal(result.count);
+                    expect(result.monitoredCredentials[0].usernameHash).to.equal(hashing.sha256(username));
+                    expect(result.monitoredCredentials[0].customData).to.equal(customData);
+                    done();
+                }
+            );
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com', process.env.PP_ENC_KEY);
+
+            bogusServer.getCredentialsAlertSubscriptionsForUser(username,
                 function (err, result) {
                     expect(err).to.not.equal(null);
                     expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');

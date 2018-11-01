@@ -487,6 +487,20 @@ PasswordPing.prototype.getCredentialsAlertSubscriptions = function(iPageSize, sP
     });
 };
 
+PasswordPing.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsername, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var queryString = 'credentials=1&usernameHash=' + Hashing.sha256(sUsername);
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
 
 PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBody, fnCallback) {
 
