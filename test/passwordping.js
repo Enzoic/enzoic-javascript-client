@@ -165,10 +165,11 @@ describe('PasswordPing', function() {
         it('gets correct result', function(done) {
             passwordping.getExposuresForUser('eicar', function(err, result) {
                 expect(err).to.equal(null);
-                expect(result.count).to.equal(7);
-                expect(result.exposures.length).to.equal(7);
+                expect(result.count).to.equal(8);
+                expect(result.exposures.length).to.equal(8);
                 expect(result.exposures).to.deep.equal(["5820469ffdb8780510b329cc", "58258f5efdb8780be88c2c5d",
-                    "582a8e51fdb87806acc426ff", "583d2f9e1395c81f4cfa3479", "59ba1aa369644815dcd8683e", "59cae0ce1d75b80e0070957c", "5bc64f5f4eb6d894f09eae70"]);
+                    "582a8e51fdb87806acc426ff", "583d2f9e1395c81f4cfa3479", "59ba1aa369644815dcd8683e",
+                    "59cae0ce1d75b80e0070957c", "5bc64f5f4eb6d894f09eae70", "5bdcb0944eb6d8a97cfacdff"]);
                 done();
             });
         });
@@ -439,6 +440,102 @@ describe('PasswordPing', function() {
         });
     });
 
+    describe('#addUserAlertSubscriptionsWithCustomData()', function() {
+        var passwordping = getPasswordPing();
+
+        var testUserHashes = [
+            'd56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44357e',
+            'd56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44357f'
+        ];
+
+        var testCustomData = '123456';
+        var testCustomData2 = '1234567';
+
+        it('cleans up previous test data', function(done) {
+            passwordping.deleteUserAlertSubscriptionsByCustomData(testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result.deleted).to.greaterThan(-1);
+                    expect(result.notFound).to.greaterThan(-1);
+                    done();
+                }
+            );
+        });
+
+        // it('cleans up previous hash test data', function(done) {
+        //     passwordping.deleteUserAlertSubscriptions(testUserHashes,
+        //         function (err, result) {
+        //             expect(err).to.equal(null);
+        //             expect(result.deleted).to.greaterThan(-1);
+        //             expect(result.notFound).to.greaterThan(-1);
+        //             done();
+        //         }
+        //     );
+        // });
+
+        it('cleans up previous alt test data', function(done) {
+            passwordping.deleteUserAlertSubscriptionsByCustomData(testCustomData2,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result.deleted).to.greaterThan(-1);
+                    expect(result.notFound).to.greaterThan(-1);
+                    done();
+                }
+            );
+        });
+
+        it('gets correct result', function(done) {
+            passwordping.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        added: 2,
+                        alreadyExisted: 0
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('gets correct repeated result', function(done) {
+            passwordping.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        added: 0,
+                        alreadyExisted: 2
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('allows same hashes with different custom data', function(done) {
+            passwordping.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData2,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        added: 2,
+                        alreadyExisted: 0
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com');
+
+            bogusServer.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
+                function (err, result) {
+                    expect(err).to.not.equal(null);
+                    expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                    done();
+                }
+            );
+        });
+    });
+
     describe('#deleteUserAlertSubscriptions()', function() {
         var passwordping = getPasswordPing();
 
@@ -488,6 +585,76 @@ describe('PasswordPing', function() {
             var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com');
 
             bogusServer.deleteUserAlertSubscriptions(testUserHashes,
+                function (err, result) {
+                    expect(err).to.not.equal(null);
+                    expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('#deleteUserAlertSubscriptionsByCustomData()', function() {
+        var passwordping = getPasswordPing();
+
+        var testUserHashes = [
+            'd56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351e',
+            'd56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351f'
+        ];
+        var testCustomData = '123456';
+
+        it('cleans up previous test data', function(done) {
+            passwordping.deleteUserAlertSubscriptionsByCustomData(testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result.deleted).to.greaterThan(-1);
+                    expect(result.notFound).to.greaterThan(-1);
+                    done();
+                }
+            );
+        });
+
+        it('adds test data', function(done) {
+            passwordping.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result.added).to.greaterThan(-1);
+                    expect(result.alreadyExisted).to.greaterThan(-1);
+                    done();
+                }
+            );
+        });
+
+        it('gets correct result', function(done) {
+            passwordping.deleteUserAlertSubscriptionsByCustomData(testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        deleted: 2,
+                        notFound: 0
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('gets correct repeated result', function(done) {
+            passwordping.deleteUserAlertSubscriptionsByCustomData(testCustomData,
+                function (err, result) {
+                    expect(err).to.equal(null);
+                    expect(result).to.deep.equal({
+                        deleted: 0,
+                        notFound: 1
+                    });
+                    done();
+                }
+            );
+        });
+
+        it('handles error properly', function(done) {
+            var bogusServer = new PasswordPing(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.passwordping.com');
+
+            bogusServer.deleteUserAlertSubscriptionsByCustomData(testCustomData,
                 function (err, result) {
                     expect(err).to.not.equal(null);
                     expect(err).to.equal('Unexpected error calling PasswordPing API: getaddrinfo ENOTFOUND bogus.passwordping.com bogus.passwordping.com:443');
@@ -1296,7 +1463,7 @@ describe('PasswordPing', function() {
                     expect(err).to.equal(null);
                     expect(result.count).to.equal(1);
                     expect(result.monitoredCredentials.length).to.equal(result.count);
-                    expect(result.monitoredCredentials[0].usernameHash).to.equal(hashing.sha256(username));
+                    expect(result.monitoredCredentials[0].usernameHash).to.equal(Hashing.sha256(username));
                     expect(result.monitoredCredentials[0].customData).to.equal(customData);
                     done();
                 }

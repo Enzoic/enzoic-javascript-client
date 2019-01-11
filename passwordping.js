@@ -260,7 +260,7 @@ PasswordPing.prototype.getExposureDetails = function(sExposureID, fnCallback) {
     });
 };
 
-PasswordPing.prototype.addUserAlertSubscriptions = function(arrUsernameHashes, fnCallback) {
+PasswordPing.prototype.addUserAlertSubscriptions = function(arrUsernameHashes, fnCallback, sCustomData) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -309,6 +309,41 @@ PasswordPing.prototype.getUserAlertSubscriptions = function(iPageSize, sPagingTo
     }
 
     this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.addUserAlertSubscriptionsWithCustomData = function(arrUsernameHashes, sCustomData, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        usernameHashes: arrUsernameHashes,
+        customData: sCustomData
+    };
+
+    this.makeRestCall(path, '', 'POST', JSON.stringify(requestObject), function(err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    });
+};
+
+PasswordPing.prototype.deleteUserAlertSubscriptionsByCustomData = function(sCustomData, fnCallback) {
+    var path = '/v1/alert-subscriptions';
+
+    var requestObject = {
+        usernameCustomData: sCustomData
+    };
+
+    this.makeRestCall(path, '', 'DELETE', JSON.stringify(requestObject), function(err, response) {
         if (err) {
             fnCallback(err, null);
         }
