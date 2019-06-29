@@ -1,24 +1,24 @@
 {
-  "name": "passwordping",
+  "name": "enzoic",
   "version": "2.3.0",
-  "description": "JavaScript library for PasswordPing API",
-  "main": "passwordping.js",
+  "description": "JavaScript library for Enzoic API",
+  "main": "enzoic.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PasswordPing/passwordping-javascript-client.git"
+    "url": "git+https://github.com/Enzoic/enzoic-javascript-client.git"
   },
   "keywords": [
-    "passwordping"
+    "enzoic"
   ],
-  "author": "PasswordPing",
+  "author": "Enzoic",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/PasswordPing/passwordping-javascript-client/issues"
+    "url": "https://github.com/Enzoic/enzoic-javascript-client/issues"
   },
-  "homepage": "https://github.com/PasswordPing/passwordping-javascript-client#readme",
+  "homepage": "https://github.com/Enzoic/enzoic-javascript-client#readme",
   "dependencies": {
     "argon2": "^0.19.0",
     "bcrypt-nodejs": "0.0.3",

@@ -4,7 +4,7 @@ var https = require('https');
 var Hashing = require('./src/hashing');
 var PasswordType = require('./src/passwordtype');
 
-function PasswordPing(sAPIKey, sSecret, sBaseAPIHost, sEncryptionKey) {
+function Enzoic(sAPIKey, sSecret, sBaseAPIHost, sEncryptionKey) {
     this.apiKey = sAPIKey;
     this.secret = sSecret;
     this.host = sBaseAPIHost;
@@ -18,11 +18,11 @@ function PasswordPing(sAPIKey, sSecret, sBaseAPIHost, sEncryptionKey) {
 
     if (!this.host) {
         // default host
-        this.host = 'api.passwordping.com';
+        this.host = 'api.enzoic.com';
     }
 }
 
-PasswordPing.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, fnCallback) {
+Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, fnCallback) {
     var accountsPath = '/v1/accounts';
     var credentialsPath = '/v1/credentials';
     var me = this;
@@ -45,7 +45,7 @@ PasswordPing.prototype.checkCredentialsEx = function(sUsername, sPassword, oOpti
             // first check the date threshold
             if (new Date(accountResponse.lastBreachDate) <= lastCheckDate)
             {
-                // if we checked these credentials after the date of the last breach in the PasswordPing system,
+                // if we checked these credentials after the date of the last breach in the Enzoic system,
                 // bail out and return false
                 fnCallback(null, false);
                 return;
@@ -129,11 +129,11 @@ PasswordPing.prototype.checkCredentialsEx = function(sUsername, sPassword, oOpti
     });
 };
 
-PasswordPing.prototype.checkCredentials = function(sUsername, sPassword, fnCallback) {
+Enzoic.prototype.checkCredentials = function(sUsername, sPassword, fnCallback) {
     this.checkCredentialsEx(sUsername, sPassword, null, fnCallback);
 };
 
-PasswordPing.prototype.checkPassword = function(sPassword, fnCallback) {
+Enzoic.prototype.checkPassword = function(sPassword, fnCallback) {
     var path = '/v1/passwords';
     var md5 = Hashing.md5(sPassword);
     var sha1 = Hashing.sha1(sPassword);
@@ -165,7 +165,7 @@ PasswordPing.prototype.checkPassword = function(sPassword, fnCallback) {
     });
 };
 
-PasswordPing.prototype.getExposuresForUser = function(sUsername, fnCallback) {
+Enzoic.prototype.getExposuresForUser = function(sUsername, fnCallback) {
     var path = '/v1/exposures';
 
     this.makeRestCall(path, 'username=' + Hashing.sha256(sUsername), 'GET', null, function(err, response) {
@@ -186,7 +186,7 @@ PasswordPing.prototype.getExposuresForUser = function(sUsername, fnCallback) {
     });
 };
 
-PasswordPing.prototype.getExposedUsersForDomain = function (sDomain, iPageSize, sPagingToken, fnCallback) {
+Enzoic.prototype.getExposedUsersForDomain = function (sDomain, iPageSize, sPagingToken, fnCallback) {
     var path = '/v1/exposures';
 
     var queryString = 'accountDomain=' + sDomain;
@@ -217,7 +217,7 @@ PasswordPing.prototype.getExposedUsersForDomain = function (sDomain, iPageSize, 
     });
 };
 
-PasswordPing.prototype.getExposuresForDomain = function (sDomain, bIncludeExposureDetails, fnCallback) {
+Enzoic.prototype.getExposuresForDomain = function (sDomain, bIncludeExposureDetails, fnCallback) {
     var path = '/v1/exposures';
 
     var queryString = 'domain=' + sDomain;
@@ -244,7 +244,7 @@ PasswordPing.prototype.getExposuresForDomain = function (sDomain, bIncludeExposu
     });
 };
 
-PasswordPing.prototype.getExposureDetails = function(sExposureID, fnCallback) {
+Enzoic.prototype.getExposureDetails = function(sExposureID, fnCallback) {
     var path = '/v1/exposures';
 
     this.makeRestCall(path, 'id=' + encodeURIComponent(sExposureID), 'GET', null, function(err, response) {
@@ -260,7 +260,7 @@ PasswordPing.prototype.getExposureDetails = function(sExposureID, fnCallback) {
     });
 };
 
-PasswordPing.prototype.addUserAlertSubscriptions = function(arrUsernameHashes, fnCallback, sCustomData) {
+Enzoic.prototype.addUserAlertSubscriptions = function(arrUsernameHashes, fnCallback, sCustomData) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -277,7 +277,7 @@ PasswordPing.prototype.addUserAlertSubscriptions = function(arrUsernameHashes, f
     });
 };
 
-PasswordPing.prototype.deleteUserAlertSubscriptions = function(arrUsernameHashes, fnCallback) {
+Enzoic.prototype.deleteUserAlertSubscriptions = function(arrUsernameHashes, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -294,7 +294,7 @@ PasswordPing.prototype.deleteUserAlertSubscriptions = function(arrUsernameHashes
     });
 };
 
-PasswordPing.prototype.getUserAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
+Enzoic.prototype.getUserAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var queryString = '';
@@ -318,7 +318,7 @@ PasswordPing.prototype.getUserAlertSubscriptions = function(iPageSize, sPagingTo
     });
 };
 
-PasswordPing.prototype.addUserAlertSubscriptionsWithCustomData = function(arrUsernameHashes, sCustomData, fnCallback) {
+Enzoic.prototype.addUserAlertSubscriptionsWithCustomData = function(arrUsernameHashes, sCustomData, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -336,7 +336,7 @@ PasswordPing.prototype.addUserAlertSubscriptionsWithCustomData = function(arrUse
     });
 };
 
-PasswordPing.prototype.deleteUserAlertSubscriptionsByCustomData = function(sCustomData, fnCallback) {
+Enzoic.prototype.deleteUserAlertSubscriptionsByCustomData = function(sCustomData, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -353,7 +353,7 @@ PasswordPing.prototype.deleteUserAlertSubscriptionsByCustomData = function(sCust
     });
 };
 
-PasswordPing.prototype.isUserSubscribedForAlerts = function(sUsernameHash, fnCallback) {
+Enzoic.prototype.isUserSubscribedForAlerts = function(sUsernameHash, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     this.makeRestCall(path, 'usernameHash=' + sUsernameHash, 'GET', null, function(err, response) {
@@ -369,7 +369,7 @@ PasswordPing.prototype.isUserSubscribedForAlerts = function(sUsernameHash, fnCal
     });
 };
 
-PasswordPing.prototype.addDomainAlertSubscriptions = function(arrDomains, fnCallback) {
+Enzoic.prototype.addDomainAlertSubscriptions = function(arrDomains, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -386,7 +386,7 @@ PasswordPing.prototype.addDomainAlertSubscriptions = function(arrDomains, fnCall
     });
 };
 
-PasswordPing.prototype.deleteDomainAlertSubscriptions = function(arrDomains, fnCallback) {
+Enzoic.prototype.deleteDomainAlertSubscriptions = function(arrDomains, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -403,7 +403,7 @@ PasswordPing.prototype.deleteDomainAlertSubscriptions = function(arrDomains, fnC
     });
 };
 
-PasswordPing.prototype.getDomainAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
+Enzoic.prototype.getDomainAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var queryString = 'domains=1&';
@@ -427,7 +427,7 @@ PasswordPing.prototype.getDomainAlertSubscriptions = function(iPageSize, sPaging
     });
 };
 
-PasswordPing.prototype.isDomainSubscribedForAlerts = function(sDomain, fnCallback) {
+Enzoic.prototype.isDomainSubscribedForAlerts = function(sDomain, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     this.makeRestCall(path, 'domain=' + sDomain, 'GET', null, function(err, response) {
@@ -443,7 +443,7 @@ PasswordPing.prototype.isDomainSubscribedForAlerts = function(sDomain, fnCallbac
     });
 };
 
-PasswordPing.prototype.addCredentialsAlertSubscription = function(sUsername, sPassword, sCustomData, fnCallback) {
+Enzoic.prototype.addCredentialsAlertSubscription = function(sUsername, sPassword, sCustomData, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     Hashing.aes256Encrypt(sPassword, this.encryptionKey, (err, passwordCrypt) => {
@@ -464,7 +464,7 @@ PasswordPing.prototype.addCredentialsAlertSubscription = function(sUsername, sPa
     });
 };
 
-PasswordPing.prototype.deleteCredentialsAlertSubscription = function(sMonitoredCredentialsID, fnCallback) {
+Enzoic.prototype.deleteCredentialsAlertSubscription = function(sMonitoredCredentialsID, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -481,7 +481,7 @@ PasswordPing.prototype.deleteCredentialsAlertSubscription = function(sMonitoredC
     });
 };
 
-PasswordPing.prototype.deleteCredentialsAlertSubscriptionByCustomData = function(sCustomData, fnCallback) {
+Enzoic.prototype.deleteCredentialsAlertSubscriptionByCustomData = function(sCustomData, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var requestObject = {
@@ -498,7 +498,7 @@ PasswordPing.prototype.deleteCredentialsAlertSubscriptionByCustomData = function
     });
 };
 
-PasswordPing.prototype.getCredentialsAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
+Enzoic.prototype.getCredentialsAlertSubscriptions = function(iPageSize, sPagingToken, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var queryString = 'credentials=1';
@@ -522,7 +522,7 @@ PasswordPing.prototype.getCredentialsAlertSubscriptions = function(iPageSize, sP
     });
 };
 
-PasswordPing.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsername, fnCallback) {
+Enzoic.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsername, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
     var queryString = 'credentials=1&usernameHash=' + Hashing.sha256(sUsername);
@@ -537,7 +537,7 @@ PasswordPing.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsern
     });
 };
 
-PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBody, fnCallback) {
+Enzoic.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBody, fnCallback) {
 
     var options = {
         agent: false,
@@ -569,12 +569,12 @@ PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBo
             fnCallback(null, res.statusCode);
         }
         else {
-            fnCallback('Unexpected error from PasswordPing API: ' + res.statusCode + ' ' + res.statusMessage, null);
+            fnCallback('Unexpected error from Enzoic API: ' + res.statusCode + ' ' + res.statusMessage, null);
         }
     });
 
     req.on('error', function(e) {
-        fnCallback('Unexpected error calling PasswordPing API: ' + e.message);
+        fnCallback('Unexpected error calling Enzoic API: ' + e.message);
     });
 
     if (sMethod === 'POST' || sMethod === 'PUT' || sMethod === 'DELETE') {
@@ -584,7 +584,7 @@ PasswordPing.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBo
     req.end();
 };
 
-PasswordPing.prototype.calcCredentialHash = function(sUsername, sPassword, sSalt, oHashSpec, fnCallback) {
+Enzoic.prototype.calcCredentialHash = function(sUsername, sPassword, sSalt, oHashSpec, fnCallback) {
     var me = this;
 
     return new Promise(function (fulfill, reject) {
@@ -608,7 +608,7 @@ PasswordPing.prototype.calcCredentialHash = function(sUsername, sPassword, sSalt
     });
 };
 
-PasswordPing.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSalt, fnCallback) {
+Enzoic.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSalt, fnCallback) {
 
     function checkSalt(salt) {
         if (typeof(salt) !== 'string' || salt.length === 0) {
@@ -744,4 +744,4 @@ PasswordPing.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSa
     }
 };
 
-module.exports = PasswordPing;
+module.exports = Enzoic;

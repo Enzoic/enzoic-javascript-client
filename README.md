@@ -1,4 +1,4 @@
-# PasswordPing JavaScript Client Library
+# Enzoic JavaScript Client Library
 
 ## TOC
 
@@ -6,12 +6,12 @@ This README covers the following topics:
 
 - [Installation](#installation)
 - [API Overview](#api-overview)
-- [The PasswordPing constructor](#the-passwordping-constructor)
+- [The Enzoic constructor](#the-enzoic-constructor)
 
 ## Installation
 
 ```sh
-$ npm install passwordping
+$ npm install enzoic
 ```
 
 ## API Overview
@@ -19,13 +19,13 @@ $ npm install passwordping
 Below is some simple example code which demonstrates the usage of the API. 
 
 ```js
-var PasswordPing = require('passwordping');
+var Enzoic = require('enzoic');
 
-// Create a new PasswordPing instance - this is our primary interface for making API calls
-var passwordping = new PasswordPing(YOUR_API_KEY, YOUR_API_SECRET);
+// Create a new Enzoic instance - this is our primary interface for making API calls
+var enzoic = new Enzoic(YOUR_API_KEY, YOUR_API_SECRET);
 
 // Check whether a password has been compromised
-passwordping.checkPassword('password-to-test', 
+enzoic.checkPassword('password-to-test', 
     (error, passwordCompromised) => {
         if (error) {
             console.log('Error calling API: ' + error);
@@ -39,7 +39,7 @@ passwordping.checkPassword('password-to-test',
     });
 
 // Check whether a specific set of credentials are compromised
-passwordping.checkCredentials('test@passwordping.com', 'password-to-test', 
+enzoic.checkCredentials('test@enzoic.com', 'password-to-test', 
     (error, credsCompromised) => {
         if (error) {
             console.log('Error calling API: ' + error);
@@ -57,7 +57,7 @@ passwordping.checkCredentials('test@passwordping.com', 'password-to-test',
 //
 // lastCheckDate: 
 // The timestamp for the last check you performed for this user.
-// If the date/time you provide for the last check is greater than the timestamp PasswordPing has for the last
+// If the date/time you provide for the last check is greater than the timestamp Enzoic has for the last
 // breach affecting this user, the check will not be performed.  This can be used to substantially increase performance.
 //
 // excludeHashAlgorithms: 
@@ -65,10 +65,10 @@ passwordping.checkCredentials('test@passwordping.com', 'password-to-test',
 // By excluding computationally expensive PasswordTypes, such as BCrypt, it is possible to balance the performance of this
 // call against security.
 //
-passwordping.checkCredentialsEx('test@passwordping.com', 'password-to-test', 
+enzoic.checkCredentialsEx('test@enzoic.com', 'password-to-test', 
     {
         lastCheckDate: new Date('2016-12-10T02:05:03.000Z'), 
-        excludeHashAlgorithms: [8, 11, 12] // see https://www.passwordping.com/docs-credentials-api/#PasswordHashType 
+        excludeHashAlgorithms: [8, 11, 12] // see https://www.enzoic.com/docs-credentials-api/#PasswordHashType 
     },
     (error, credsCompromised) => {
         if (error) {
@@ -83,45 +83,45 @@ passwordping.checkCredentialsEx('test@passwordping.com', 'password-to-test',
     });
 
 // get all exposures for the given user
-passwordping.getExposuresForUser('test@passwordping.com', 
+enzoic.getExposuresForUser('test@enzoic.com', 
     (error, result) => {
         if (error) {
             console.log('Error calling API: ' + error);
         }
         else {
-            console.log(result.exposures.count + ' exposures found for test@passwordping.com');
+            console.log(result.exposures.count + ' exposures found for test@enzoic.com');
     
             // now get the full details for the first exposure returned in the list
-            passwordping.getExposureDetails(result.exposures[0], 
+            enzoic.getExposureDetails(result.exposures[0], 
                 (error, exposureDetails) => {
                     if (error) {
                         console.log('Error calling API: ' + error);
                     }
                     else {
-                        console.log('First exposure for test@passwordping.com was ' + exposureDetails.title);
+                        console.log('First exposure for test@enzoic.com was ' + exposureDetails.title);
                     }
                 });
         }
     });
 
 // get all exposures for a given domain - second parameter indicates whether to include exposure details in results
-passwordping.getExposuresForDomain('passwordping.com', true, 
+enzoic.getExposuresForDomain('enzoic.com', true, 
     (error, result) => {
         if (error) {
             console.log('Error calling API: ' + error);
         }
         else {
-            console.log(result.exposures.count + ' exposures found for passwordping.com');
+            console.log(result.exposures.count + ' exposures found for enzoic.com');
             
             if (result.exposures.count > 0) {
-                console.log('First exposure for passwordping.com was ' + result.exposures[0].title);
+                console.log('First exposure for enzoic.com was ' + result.exposures[0].title);
             }
         }
     });
 
 // get all users exposed for a given domain
-// returns paged results per https://www.passwordping.com/docs-exposures-api/#get-exposed-users-for-domain
-passwordping.getExposedUsersForDomain('passwordping.com', 20, null, 
+// returns paged results per https://www.enzoic.com/docs-exposures-api/#get-exposed-users-for-domain
+enzoic.getExposedUsersForDomain('enzoic.com', 20, null, 
     (error, exposedUsers) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -134,7 +134,7 @@ passwordping.getExposedUsersForDomain('passwordping.com', 20, null,
            
            // if pagingToken present, get next page of results
            if (exposedUsers.pagingToken) {
-                passwordping.getExposedUsersForDomain('passwordping.com', 20, exposedUsers.pagingToken, 
+                enzoic.getExposedUsersForDomain('enzoic.com', 20, exposedUsers.pagingToken, 
                     (error, secondPageResponse) => {
                         // process second page of results, etc.
                     });   
@@ -149,7 +149,7 @@ var arrUsernameSHA256Hashes = [
 ];
 
 // subscribe for alerts for these users
-passwordping.addUserAlertSubscriptions(arrUsernameSHA256Hashes, 
+enzoic.addUserAlertSubscriptions(arrUsernameSHA256Hashes, 
     (error, addResponse) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -161,7 +161,7 @@ passwordping.addUserAlertSubscriptions(arrUsernameSHA256Hashes,
     });
 
 // delete subscriptions for these users
-passwordping.deleteUserAlertSubscriptions(arrUsernameSHA256Hashes, 
+enzoic.deleteUserAlertSubscriptions(arrUsernameSHA256Hashes, 
     (error, deleteResponse) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -173,7 +173,7 @@ passwordping.deleteUserAlertSubscriptions(arrUsernameSHA256Hashes,
     });
 
 // check whether a user is already subscribed
-passwordping.isUserSubscribedForAlerts(arrUsernameSHA256Hashes[0], 
+enzoic.isUserSubscribedForAlerts(arrUsernameSHA256Hashes[0], 
     (error, subscribed) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -187,8 +187,8 @@ passwordping.isUserSubscribedForAlerts(arrUsernameSHA256Hashes[0],
     });
 
 // get all users subscribed for alerts on this account 
-// returns paged results per https://www.passwordping.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions
-passwordping.getUserAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, 
+// returns paged results per https://www.enzoic.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions
+enzoic.getUserAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, 
     (error, subscriptionsResponse) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -201,7 +201,7 @@ passwordping.getUserAlertSubscriptions(4 /* page size */, null /* paging token -
            
            // if pagingToken present, get next page of results
            if (subscriptionsResponse.pagingToken) {
-                passwordping.getUserAlertSubscriptions(4, subscriptionsResponse.pagingToken, function (error, secondPageResponse) {
+                enzoic.getUserAlertSubscriptions(4, subscriptionsResponse.pagingToken, function (error, secondPageResponse) {
                     // process second page of results, etc.
                 });   
            }
@@ -215,7 +215,7 @@ var arrDomains = [
 ];
 
 // subscribe for alerts for these domains
-passwordping.addDomainAlertSubscriptions(arrDomains, 
+enzoic.addDomainAlertSubscriptions(arrDomains, 
     (error, addResponse) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -227,7 +227,7 @@ passwordping.addDomainAlertSubscriptions(arrDomains,
     });
 
 // delete subscriptions for these domains
-passwordping.deleteDomainAlertSubscriptions(arrDomains, 
+enzoic.deleteDomainAlertSubscriptions(arrDomains, 
     (error, deleteResponse) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -239,7 +239,7 @@ passwordping.deleteDomainAlertSubscriptions(arrDomains,
     });
 
 // check whether a domain is already subscribed
-passwordping.isDomainSubscribedForAlerts(arrDomains[0], 
+enzoic.isDomainSubscribedForAlerts(arrDomains[0], 
     (error, subscribed) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -253,8 +253,8 @@ passwordping.isDomainSubscribedForAlerts(arrDomains[0],
     });
 
 // get all users subscribed for alerts on this account 
-// returns pages results per https://www.passwordping.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions-domains
-passwordping.getDomainAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, 
+// returns pages results per https://www.enzoic.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions-domains
+enzoic.getDomainAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, 
     (error, subscriptionsResponse) => {
        if (error) {
            console.log('Error calling API: ' + error);
@@ -267,7 +267,7 @@ passwordping.getDomainAlertSubscriptions(4 /* page size */, null /* paging token
            
            // if pagingToken present, get next page of results
            if (subscriptionsResponse.pagingToken) {
-                passwordping.getDomainAlertSubscriptions(4, subscriptionsResponse.pagingToken, function (error, secondPageResponse) {
+                enzoic.getDomainAlertSubscriptions(4, subscriptionsResponse.pagingToken, function (error, secondPageResponse) {
                     // process second page of results, etc.
                 });   
            }
@@ -278,16 +278,16 @@ passwordping.getDomainAlertSubscriptions(4 /* page size */, null /* paging token
 
 More information in reference format can be found below.
 
-## The PasswordPing constructor
+## The Enzoic constructor
 
-The standard constructor takes the API key and secret you were issued on PasswordPing signup.
+The standard constructor takes the API key and secret you were issued on Enzoic signup.
 
 ```js
-var passwordping = new PasswordPing(YOUR_API_KEY, YOUR_API_SECRET);
+var enzoic = new Enzoic(YOUR_API_KEY, YOUR_API_SECRET);
 ```
 
 If you were instructed to use an alternate API host, you may call the overloaded constructor and pass the host you were provided.
 
 ```js
-var passwordping = new PasswordPing(YOUR_API_KEY, YOUR_API_SECRET, "api-alt.passwordping.com");
+var enzoic = new Enzoic(YOUR_API_KEY, YOUR_API_SECRET, "api-alt.enzoic.com");
 ```
