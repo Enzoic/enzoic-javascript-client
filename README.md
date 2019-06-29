@@ -11,7 +11,7 @@ This README covers the following topics:
 ## Installation
 
 ```sh
-$ npm install enzoic
+$ npm install @enzoic/enzoic
 ```
 
 ## API Overview
