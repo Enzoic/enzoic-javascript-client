@@ -68,29 +68,43 @@ describe('Enzoic', function() {
     });
 
     describe('#checkCredentials()', function() {
-        this.timeout(10000);
+        this.timeout(20000);
         var enzoic = getEnzoic();
 
-       it('gets correct positive result', function(done) {
-            enzoic.checkCredentials('test@passwordping.com', '123456', function(err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(true);
-                done();
-            });
+       it('gets correct positive results', async function() {
+           const promises = [];
+           for (let i = 1; i <= 32; i++) {
+               if ([4,9,12,15].indexOf(i) < 0) {
+                   promises.push(new Promise((resolve, reject) => enzoic.checkCredentials('eicar_' + i + '@enzoic.com', '123456', function(err, result) {
+                       if (err) reject(err); else resolve(result);
+                   })));
+               }
+           }
+
+           // make sure results were all positive
+           const results = await Promise.all(promises);
+           for (let i = 0; i < results.length; i++) expect(results[i]).to.equal(true);
        });
 
-       it('gets correct negative result', function(done) {
-            enzoic.checkCredentials('test@passwordping.com', '123456122', function(err, result) {
-               expect(err).to.equal(null);
-               expect(result).to.equal(false);
-               done();
-            });
+       it('gets correct negative result', async function() {
+           const promises = [];
+           for (let i = 1; i <= 32; i++) {
+               if ([4,9,12,15].indexOf(i) < 0) {
+                   promises.push(new Promise((resolve, reject) => enzoic.checkCredentials('eicar_' + i + '@enzoic.com', '1234561212', function(err, result) {
+                       if (err) reject(err); else resolve(result);
+                   })));
+               }
+           }
+
+           // make sure results were all negative
+           const results = await Promise.all(promises);
+           for (let i = 0; i < results.length; i++) expect(results[i]).to.equal(false);
        });
 
         it('handles errors properly', function(done) {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
-            bogusServer.checkCredentials('test@passwordping.com', '123456', function (err, result) {
+            bogusServer.checkCredentials('eicar_1@enzoic.com', '123456', function (err, result) {
                 expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
                 done();
             });
