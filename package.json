@@ -1,6 +1,6 @@
 {
   "name": "@enzoic/enzoic",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "JavaScript library for Enzoic API",
   "main": "enzoic.js",
   "scripts": {
@@ -20,11 +20,11 @@
   },
   "homepage": "https://github.com/Enzoic/enzoic-javascript-client#readme",
   "dependencies": {
-    "argon2": "^0.19.0",
+    "argon2": "^0.26.2",
     "bcrypt-nodejs": "0.0.3",
     "bitwise-xor": "0.0.0",
-    "crc-32": "^1.0.2",
-    "nano-md5": "^1.0.3"
+    "crc-32": "^1.2.0",
+    "nano-md5": "^1.0.5"
   },
   "devDependencies": {
     "chai": "^4.0.2",

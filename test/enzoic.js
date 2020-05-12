@@ -61,7 +61,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.checkPassword('123456', function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -105,7 +105,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.checkCredentials('eicar_1@enzoic.com', '123456', function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -136,7 +136,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.checkCredentialsEx('testpwdpng445', '123456', {}, function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -201,7 +201,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.getExposuresForUser('eicar', function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -283,7 +283,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.getExposedUsersForDomain('email.tst', 2, null, function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -297,7 +297,7 @@ describe('Enzoic', function() {
                 expect(err).to.equal(null);
                 expect(result.count).to.equal(10);
                 expect(result.exposures.length).to.equal(10);
-                expect(result.exposures).to.deep.equal([
+                expect(result.exposures.sort()).to.deep.equal([
                     "57ffcf3c1395c80b30dd4429",
                     "57dc11964d6db21300991b78",
                     "5805029914f33808dc802ff7",
@@ -308,7 +308,7 @@ describe('Enzoic', function() {
                     "59f36f8c4eb6d85ba0bee09c",
                     "5bcf9af3e5017d07201e2149",
                     "5c4f818bd3cef70e983dda1e"
-                ]);
+                ].sort());
                 done();
             });
         });
@@ -352,7 +352,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.getExposuresForDomain('email.tst', false, function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -372,8 +372,8 @@ describe('Enzoic', function() {
                     dateAdded: "2016-11-07T09:17:19.000Z",
                     passwordType: "MD5",
                     exposedData: ["Emails", "Passwords", "Usernames", "Website Activity"],
-                    entries: 43570999,
-                    domainsAffected: 1218513,
+                    entries: 81967007,
+                    domainsAffected: 1219053,
                     sourceURLs: []
                 });
                 done();
@@ -392,7 +392,7 @@ describe('Enzoic', function() {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, 'bogus.enzoic.com');
 
             bogusServer.getExposureDetails('5820469ffdb8780510b329cc', function (err, result) {
-                expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                 done();
             });
         });
@@ -449,7 +449,7 @@ describe('Enzoic', function() {
             bogusServer.addUserAlertSubscriptions(testUserHashes,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -545,7 +545,7 @@ describe('Enzoic', function() {
             bogusServer.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -603,7 +603,7 @@ describe('Enzoic', function() {
             bogusServer.deleteUserAlertSubscriptions(testUserHashes,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -673,7 +673,7 @@ describe('Enzoic', function() {
             bogusServer.deleteUserAlertSubscriptionsByCustomData(testCustomData,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -733,7 +733,7 @@ describe('Enzoic', function() {
             bogusServer.isUserSubscribedForAlerts(testUserHash,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -807,7 +807,7 @@ describe('Enzoic', function() {
             bogusServer.getUserAlertSubscriptions(4, null,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -865,7 +865,7 @@ describe('Enzoic', function() {
             bogusServer.addDomainAlertSubscriptions(testDomains,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -923,7 +923,7 @@ describe('Enzoic', function() {
             bogusServer.deleteDomainAlertSubscriptions(testDomains,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -985,7 +985,7 @@ describe('Enzoic', function() {
             bogusServer.isDomainSubscribedForAlerts(testDomain,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -1059,7 +1059,7 @@ describe('Enzoic', function() {
             bogusServer.getDomainAlertSubscriptions(4, null,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -1324,7 +1324,7 @@ describe('Enzoic', function() {
             bogusServer.addCredentialsAlertSubscription(username, password, customData,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -1388,7 +1388,7 @@ describe('Enzoic', function() {
             bogusServer.deleteCredentialsAlertSubscription(newID,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -1442,7 +1442,7 @@ describe('Enzoic', function() {
             bogusServer.getCredentialsAlertSubscriptions(4, null,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
@@ -1492,7 +1492,7 @@ describe('Enzoic', function() {
             bogusServer.getCredentialsAlertSubscriptionsForUser(username,
                 function (err, result) {
                     expect(err).to.not.equal(null);
-                    expect(err).to.equal('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com bogus.enzoic.com:443');
+                    expect(err).to.include('Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com');
                     done();
                 }
             );
