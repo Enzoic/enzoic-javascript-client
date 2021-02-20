@@ -33,6 +33,9 @@ Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, f
     var lastCheckDate = (oOptions && oOptions.lastCheckDate)
         ? oOptions.lastCheckDate
         : new Date('1980-01-01');
+    var includeExposures = (oOptions && oOptions.includeExposures)
+        ? oOptions.includeExposures
+        : false;
 
     this.makeRestCall(accountsPath, 'username=' + Hashing.sha256(sUsername), 'GET', null, function (err, accountResponse) {
         if (err) {
@@ -84,17 +87,21 @@ Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, f
 
             // wait for all the credential hash calculations to finish
             Promise.all(credentialHashCalcs)
-                .then(values => {
+                .then(credentialsHashes => {
                     // build the query string for the credentials call
-                    for (var i = 0; i < values.length; i++) {
-                        if (values[i]) {
+                    for (var i = 0; i < credentialsHashes.length; i++) {
+                        if (credentialsHashes[i]) {
                             if (queryString.length === 0) {
-                                queryString += "partialHashes=" + values[i].substr(0, 10);
+                                queryString += "partialHashes=" + credentialsHashes[i].substr(0, 10);
                             }
                             else {
-                                queryString += "&partialHashes=" + values[i].substr(0, 10);
+                                queryString += "&partialHashes=" + credentialsHashes[i].substr(0, 10);
                             }
                         }
+                    }
+
+                    if (includeExposures === true) {
+                        queryString += "&includeExposures=1";
                     }
 
                     if (queryString.length > 0) {
@@ -105,11 +112,32 @@ Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, f
                             }
                             else {
                                 if (credsResponse !== 404) {
-                                    // compare the candidate results to the local full hashes
-                                    for (let i = 0; i < credsResponse.candidateHashes.length; i++) {
-                                        if (values.indexOf(credsResponse.candidateHashes[i]) >= 0) {
-                                            fnCallback(null, true);
+                                    if (includeExposures === true) {
+                                        var results = {exposures: []};
+                                        var found = false;
+
+                                        // compare the candidate results to the local full hashes
+                                        for (var i = 0; i < credsResponse.candidateHashes.length; i++) {
+                                            if (credentialsHashes.indexOf(credsResponse.candidateHashes[i].hash) >= 0) {
+                                                results.exposures.push(...credsResponse.candidateHashes[i].exposures);
+                                                found = true;
+                                            }
+                                        }
+
+                                        if (found === true) {
+                                            // return results in this case
+                                            results.exposures = [...new Set(results.exposures)];
+                                            fnCallback(null, results);
                                             return;
+                                        }
+                                    }
+                                    else {
+                                        // compare the candidate results to the local full hashes
+                                        for (var i = 0; i < credsResponse.candidateHashes.length; i++) {
+                                            if (credentialsHashes.indexOf(credsResponse.candidateHashes[i]) >= 0) {
+                                                fnCallback(null, true);
+                                                return;
+                                            }
                                         }
                                     }
                                 }
