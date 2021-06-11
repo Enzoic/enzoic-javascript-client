@@ -224,6 +224,33 @@ Hashing = {
         return this.sha1(sSalt + sPassword);
     },
 
+    ntlm: function(sPassword) {
+        var buf = new ArrayBuffer(sPassword.length*2);
+        var bufView = new Uint16Array(buf);
+        for (var i=0, strLen=sPassword.length; i < strLen; i++) {
+            bufView[i] = sPassword.charCodeAt(i);
+        }
+        return new Buffer(crypto.createHash('md4').update(new Buffer(buf)).digest("")).toString("hex");
+    },
+
+    sha384: function(sPassword) {
+        return crypto.createHash('sha384').update(sPassword).digest("hex");
+    },
+
+    customAlgorithm7: function(sPassword, sSalt) {
+        const derivedSalt = this.sha1(sSalt);
+        const hmac = crypto.createHmac("sha256", "d2e1a4c569e7018cc142e9cce755a964bd9b193d2d31f02d80bb589c959afd7e");
+        return hmac.update(derivedSalt + sPassword).digest("hex");
+    },
+
+    customAlgorithm9: function(sPassword, sSalt) {
+        let result = this.sha512(sPassword + sSalt);
+        for (let i = 0; i < 11; i++) {
+            result = this.sha512(result);
+        }
+        return result;
+    },
+
     argon2: function(sToHash, sSalt, fnCallback) {
         var hashType = argon2.argon2d;
         var tCost = 3;

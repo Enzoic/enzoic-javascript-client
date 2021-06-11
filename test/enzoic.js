@@ -1298,6 +1298,54 @@ describe("Enzoic", function () {
                 done();
             });
         });
+
+        it("NTLM works", function(done) {
+            enzoic.calcPasswordHash(PasswordType.NTLM, "123456", null, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal("32ed87bdb5fdc5e9cba88547376818d4");
+                done();
+            });
+        });
+
+        it("SHA1Dash works", function(done) {
+            enzoic.calcPasswordHash(PasswordType.SHA1Dash, "123456", "478c8029d5efddc554bf2fe6bb2219d8c897d4a0", function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal("55566a759b86fbbd979b579b232f4dd214d08068");
+                done();
+            });
+        });
+
+        it("SHA384 works", function(done) {
+            enzoic.calcPasswordHash(PasswordType.SHA384, "123456", null, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal("0a989ebc4a77b56a6e2bb7b19d995d185ce44090c13e2984b7ecc6d446d4b61ea9991b76a4c2f04b1b4d244841449454");
+                done();
+            });
+        });
+
+        it("CustomAlgorithm7 works", function(done) {
+            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm7, "123456", "123456", function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal("a753d386613efd6d4a534cec97e73890f8ec960fe6634db6dbfb9b2aab207982");
+                done();
+            });
+        });
+
+        it("CustomAlgorithm8 works", function(done) {
+            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm8, "matthew", "Dn", function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal("9fc389447b7eb88aff45a1069bf89fbeff89b8fb7d11a6f450583fa4c9c70503");
+                done();
+            });
+        });
+
+        it("CustomAlgorithm9 works", function(done) {
+            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm9, "0rangepeel", "6kpcxVSjagLgsNCUCr-D", function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal("07c691fa8b022b52ac1c44cab3e056b344a7945b6eb9db727e3842b28d94fe18c17fe5b47b1b9a29d8149acbd7b3f73866cc12f0a8a8b7ab4ac9470885e052dc");
+                done();
+            });
+        });
     });
 
     describe("#addCredentialsAlertSubscription()", function () {

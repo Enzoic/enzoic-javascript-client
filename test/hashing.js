@@ -156,19 +156,43 @@ describe("Hashing", function() {
 
     describe("#ave_DataLife_Diferior()", function() {
         it("generates a correct hash", function() {
-            expect(Hashing.ave_DataLife_Diferior("password")).to.equal("696d29e0940a4957748fe3fc9efd22a3"); // TODO: verify
+            expect(Hashing.ave_DataLife_Diferior("password")).to.equal("696d29e0940a4957748fe3fc9efd22a3");
         });
     });
 
     describe("#pliggCMS()", function() {
         it("generates a correct hash", function() {
-            expect(Hashing.pliggCMS("password", "123")).to.equal("1230de084f38ace8e3d82597f55cc6ad5d6001568e6"); // TODO: verify
+            expect(Hashing.pliggCMS("password", "123")).to.equal("1230de084f38ace8e3d82597f55cc6ad5d6001568e6");
         });
     });
 
     describe("#runCMS_SMF1_1()", function() {
         it("generates a correct hash", function() {
-            expect(Hashing.runCMS_SMF1_1("password", "123")).to.equal("0de084f38ace8e3d82597f55cc6ad5d6001568e6"); // TODO: verify
+            expect(Hashing.runCMS_SMF1_1("password", "123")).to.equal("0de084f38ace8e3d82597f55cc6ad5d6001568e6");
+        });
+    });
+
+    describe("#ntlm()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.ntlm("123456")).to.equal("32ed87bdb5fdc5e9cba88547376818d4");
+        });
+    });
+
+    describe("#sha384()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.sha384("123456")).to.equal("0a989ebc4a77b56a6e2bb7b19d995d185ce44090c13e2984b7ecc6d446d4b61ea9991b76a4c2f04b1b4d244841449454");
+        });
+    });
+
+    describe("#customAlgorithm7()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.customAlgorithm7("123456", "123456")).to.equal("a753d386613efd6d4a534cec97e73890f8ec960fe6634db6dbfb9b2aab207982");
+        });
+    });
+
+    describe("#customAlgorithm9()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.customAlgorithm9("0rangepeel", "6kpcxVSjagLgsNCUCr-D")).to.equal("07c691fa8b022b52ac1c44cab3e056b344a7945b6eb9db727e3842b28d94fe18c17fe5b47b1b9a29d8149acbd7b3f73866cc12f0a8a8b7ab4ac9470885e052dc");
         });
     });
 
