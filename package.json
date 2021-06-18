@@ -24,7 +24,8 @@
     "bcrypt-nodejs": "0.0.3",
     "bitwise-xor": "0.0.0",
     "crc-32": "^1.2.0",
-    "nano-md5": "^1.0.5"
+    "nano-md5": "^1.0.5",
+    "sha512crypt-node": "^0.1.0"
   },
   "devDependencies": {
     "chai": "^4.0.2",

@@ -5,6 +5,7 @@ var crc32 = require('crc-32');
 var xor = require('bitwise-xor');
 var md5crypt = require('nano-md5');
 var descrypt = require('./descrypt');
+var b64_sha512crypt = require('sha512crypt-node').b64_sha512crypt;
 
 Hashing = {
     md5: function(sToHash, bBinary) {
@@ -249,6 +250,14 @@ Hashing = {
             result = this.sha512(result);
         }
         return result;
+    },
+
+    sha512Crypt: function(sPassword, sSalt) {
+        return b64_sha512crypt(sPassword, sSalt.substring(3));
+    },
+
+    customAlgorithm10: function(sPassword, sSalt) {
+        return this.sha512(sPassword + ":" + sSalt);
     },
 
     argon2: function(sToHash, sSalt, fnCallback) {

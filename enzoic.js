@@ -792,6 +792,16 @@ Enzoic.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSalt, fn
                 fnCallback(null, Hashing.customAlgorithm9(sPassword, sSalt));
             }
             break;
+        case PasswordType.SHA512Crypt:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.sha512Crypt(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.CustomAlgorithm10:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.customAlgorithm10(sPassword, sSalt));
+            }
+            break;
         default:
             fnCallback('Invalid password type', null);
             break;

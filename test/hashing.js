@@ -196,6 +196,18 @@ describe("Hashing", function() {
         });
     });
 
+    describe("#sha512Crypt()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.sha512Crypt("hashcat", "$6$52450745")).to.equal("$6$52450745$k5ka2p8bFuSmoVT1tzOyyuaREkkKBcCNqoDKzYiJL9RaE8yMnPgh2XzzF0NDrUhgrcLwg78xs1w5pJiypEdFX/");
+        });
+    });
+
+    describe("#customAlgorithm10()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.customAlgorithm10("chatbooks", "NqXCvAHUpAWAco3hVTG5Sg0FfmJRQPKi0LvcHwylzXHhSNuWwvYdMSSGzswi0ZdJ")).to.equal("bd17b9d14010a1d4f8c8077f1be1e20b9364d9979bbcf8591337e952cc6037026aa4a2025543d39169022344b4dd1d20f499395533e35705296034bbf7e7d663");
+        });
+    });
+
     describe("#aes256Encrypt()", function() {
         it("generates a correct value", function() {
             Hashing.aes256Encrypt("password", "11111111111111111111111111111111", (err, encrypted) => {
