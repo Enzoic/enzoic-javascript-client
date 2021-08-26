@@ -246,12 +246,24 @@ Enzoic.prototype.getExposedUsersForDomain = function (sDomain, iPageSize, sPagin
 };
 
 Enzoic.prototype.getExposuresForDomain = function (sDomain, bIncludeExposureDetails, fnCallback) {
+    return this.getExposuresForDomainEx(sDomain, bIncludeExposureDetails, null, null, fnCallback);
+};
+
+Enzoic.prototype.getExposuresForDomainEx = function (sDomain, bIncludeExposureDetails, iPageSize, sPagingToken, fnCallback) {
     var path = '/v1/exposures';
 
     var queryString = 'domain=' + sDomain;
 
     if (bIncludeExposureDetails === true) {
         queryString += '&includeExposureDetails=1';
+    }
+
+    if (iPageSize) {
+        queryString += '&pageSize=' + iPageSize;
+    }
+
+    if (sPagingToken) {
+        queryString += '&pagingToken=' + sPagingToken;
     }
 
     this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
@@ -800,6 +812,11 @@ Enzoic.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSalt, fn
         case PasswordType.CustomAlgorithm10:
             if (checkSalt(sSalt)) {
                 fnCallback(null, Hashing.customAlgorithm10(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.SHA256Crypt:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.sha256Crypt(sPassword, sSalt));
             }
             break;
         default:

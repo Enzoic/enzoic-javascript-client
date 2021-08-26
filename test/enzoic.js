@@ -73,7 +73,7 @@ describe("Enzoic", function () {
 
         it("gets correct positive results", async function () {
             const promises = [];
-            for (let i = 1; i <= 32; i++) {
+            for (let i = 1; i <= 40; i++) {
                 if ([4, 9, 12, 15].indexOf(i) < 0) {
                     promises.push(new Promise((resolve, reject) => enzoic.checkCredentials("eicar_" + i + "@enzoic.com", "123456", function (err, result) {
                         if (err) reject(err); else resolve(result);
@@ -322,6 +322,68 @@ describe("Enzoic", function () {
                     "59f36f8c4eb6d85ba0bee09c",
                     "5bcf9af3e5017d07201e2149",
                     "5c4f818bd3cef70e983dda1e"
+                ].sort());
+                done();
+            });
+        });
+
+        it("gets correct result for include details", function (done) {
+            enzoic.getExposuresForDomain("email.tst", true, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(10);
+                expect(result.exposures.length).to.equal(10);
+                expect(result.exposures[0]).to.deep.equal(
+                    {
+                        "id": "57dc11964d6db21300991b78",
+                        "title": "funsurveys.net",
+                        "entries": 5123,
+                        "date": "2015-05-01T00:00:00.000Z",
+                        "category": "Surveys",
+                        "passwordType": "Cleartext",
+                        "exposedData": [
+                            "Emails",
+                            "Passwords"
+                        ],
+                        "dateAdded": "2016-09-16T15:36:54.000Z",
+                        "sourceURLs": [],
+                        "domainsAffected": 683
+                    }
+                );
+                done();
+            });
+        });
+
+        it("handles negative result correctly", function (done) {
+            enzoic.getExposuresForDomain("@@bogus-domain@@", false, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(0);
+                expect(result.exposures.length).to.equal(0);
+                done();
+            });
+        });
+
+        it("handles error properly", function (done) {
+            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            bogusServer.getExposuresForDomain("email.tst", false, function (err, result) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+                done();
+            });
+        });
+    });
+
+    describe("#getExposuresForDomainEx()", function (done) {
+        var enzoic = getEnzoic();
+
+        it("gets correct result for no details", function (done) {
+            enzoic.getExposuresForDomainEx("email.tst", false, 2, null, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result.count).to.equal(10);
+                expect(result.exposures.length).to.equal(2);
+                expect(result.pagingToken).to.not.be.null;
+                expect(result.exposures.sort()).to.deep.equal([
+                    "57ffcf3c1395c80b30dd4429",
+                    "57dc11964d6db21300991b78",
                 ].sort());
                 done();
             });

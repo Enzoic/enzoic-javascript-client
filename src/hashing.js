@@ -6,6 +6,7 @@ var xor = require('bitwise-xor');
 var md5crypt = require('nano-md5');
 var descrypt = require('./descrypt');
 var b64_sha512crypt = require('sha512crypt-node').b64_sha512crypt;
+var unixcrypt = require("unixcrypt");
 
 Hashing = {
     md5: function(sToHash, bBinary) {
@@ -250,6 +251,10 @@ Hashing = {
             result = this.sha512(result);
         }
         return result;
+    },
+
+    sha256Crypt: function(sPassword, sSalt) {
+        return unixcrypt.encrypt(sPassword, sSalt);
     },
 
     sha512Crypt: function(sPassword, sSalt) {

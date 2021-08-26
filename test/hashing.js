@@ -196,6 +196,12 @@ describe("Hashing", function() {
         });
     });
 
+    describe("#sha256Crypt()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.sha256Crypt("hashcat", "$5$rounds=5000$GX7BopJZJxPc/KEK")).to.equal("$5$rounds=5000$GX7BopJZJxPc/KEK$le16UF8I2Anb.rOrn22AUPWvzUETDGefUmAV8AZkGcD");
+        });
+    });
+
     describe("#sha512Crypt()", function() {
         it("generates a correct hash", function() {
             expect(Hashing.sha512Crypt("hashcat", "$6$52450745")).to.equal("$6$52450745$k5ka2p8bFuSmoVT1tzOyyuaREkkKBcCNqoDKzYiJL9RaE8yMnPgh2XzzF0NDrUhgrcLwg78xs1w5pJiypEdFX/");
