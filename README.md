@@ -105,16 +105,26 @@ enzoic.getExposuresForUser('test@enzoic.com',
     });
 
 // get all exposures for a given domain - second parameter indicates whether to include exposure details in results
-enzoic.getExposuresForDomain('enzoic.com', true, 
+// returns paged results per https://www.enzoic.com/docs-exposures-api/#get-exposures-for-domain
+enzoic.getExposuresForDomainEx('enzoic.com', true, 20, null,
     (error, result) => {
         if (error) {
             console.log('Error calling API: ' + error);
         }
         else {
-            console.log(result.exposures.count + ' exposures found for enzoic.com');
-            
-            if (result.exposures.count > 0) {
-                console.log('First exposure for enzoic.com was ' + result.exposures[0].title);
+            console.log(result.count + ' exposures found for enzoic.com');
+
+            // print first page of results
+            for (var i = 0; i < result.exposures.length; i++) {
+                console.log('Exposure: ' + result.exposures.title + '\n');
+            }
+
+            // if pagingToken present, get next page of results
+            if (result.pagingToken) {
+                enzoic.getExposuresForDomainEx('enzoic.com', true, 20, result.pagingToken,
+                    (error, secondPageResponse) => {
+                        // process second page of results, etc.
+                    });
             }
         }
     });
