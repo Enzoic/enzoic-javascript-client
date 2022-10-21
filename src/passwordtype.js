@@ -40,6 +40,7 @@ PasswordType = {
     SHA512Crypt: 39,
     CustomAlgorithm10: 40,
     SHA256Crypt: 41,
+    AuthMeSHA256: 42,
 
     Unknown: 97,
     UnusablePassword: 98,

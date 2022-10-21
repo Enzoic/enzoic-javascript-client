@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/Enzoic/enzoic-javascript-client#readme",
   "dependencies": {
-    "argon2": "^0.26.2",
+    "argon2": "^0.30.1",
     "bcrypt-nodejs": "0.0.3",
     "bitwise-xor": "0.0.0",
     "crc-32": "^1.2.0",

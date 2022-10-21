@@ -37,7 +37,7 @@ Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, f
         ? oOptions.includeExposures
         : false;
 
-    this.makeRestCall(accountsPath, 'username=' + Hashing.sha256(sUsername), 'GET', null, function (err, accountResponse) {
+    this.makeRestCall(accountsPath, 'username=' + Hashing.sha256(sUsername.toLowerCase()), 'GET', null, function (err, accountResponse) {
         if (err) {
             fnCallback(err, null);
         }
@@ -80,7 +80,7 @@ Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, f
 
                 if (hashSpec.hashType) {
                     credentialHashCalcs.push(
-                        me.calcCredentialHash(sUsername, sPassword, accountResponse.salt, hashSpec)
+                        me.calcCredentialHash(sUsername.toLowerCase(), sPassword, accountResponse.salt, hashSpec)
                     );
                 }
             }
@@ -158,7 +158,7 @@ Enzoic.prototype.checkCredentialsEx = function(sUsername, sPassword, oOptions, f
 };
 
 Enzoic.prototype.checkCredentials = function(sUsername, sPassword, fnCallback) {
-    this.checkCredentialsEx(sUsername, sPassword, null, fnCallback);
+    this.checkCredentialsEx(sUsername.toLowerCase(), sPassword, null, fnCallback);
 };
 
 Enzoic.prototype.checkPassword = function(sPassword, fnCallback) {
@@ -196,7 +196,7 @@ Enzoic.prototype.checkPassword = function(sPassword, fnCallback) {
 Enzoic.prototype.getExposuresForUser = function(sUsername, fnCallback) {
     var path = '/v1/exposures';
 
-    this.makeRestCall(path, 'username=' + Hashing.sha256(sUsername), 'GET', null, function(err, response) {
+    this.makeRestCall(path, 'username=' + Hashing.sha256(sUsername.toLowerCase()), 'GET', null, function(err, response) {
         if (err) {
             fnCallback(err, null);
         }
@@ -488,7 +488,7 @@ Enzoic.prototype.addCredentialsAlertSubscription = function(sUsername, sPassword
 
     Hashing.aes256Encrypt(sPassword, this.encryptionKey, (err, passwordCrypt) => {
         var requestObject = {
-            usernameHash: Hashing.sha256(sUsername),
+            usernameHash: Hashing.sha256(sUsername.toLowerCase()),
             password: passwordCrypt,
             customData: sCustomData
         };
@@ -565,7 +565,7 @@ Enzoic.prototype.getCredentialsAlertSubscriptions = function(iPageSize, sPagingT
 Enzoic.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsername, fnCallback) {
     var path = '/v1/alert-subscriptions';
 
-    var queryString = 'credentials=1&usernameHash=' + Hashing.sha256(sUsername);
+    var queryString = 'credentials=1&usernameHash=' + Hashing.sha256(sUsername.toLowerCase());
 
     this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
         if (err) {
@@ -576,6 +576,24 @@ Enzoic.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsername, f
         }
     });
 };
+
+Enzoic.prototype.getUserPasswords = function(sUsername, fnCallback) {
+    var path = '/v1/accounts';
+
+    var queryString = 'username=' + Hashing.sha256(sUsername.toLowerCase()) + '&includePasswords=1';
+
+    this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
+        if (err) {
+            fnCallback(err, null);
+        }
+        else if (response === 404) {
+            fnCallback(null, false);
+        }
+        else {
+            fnCallback(null, response);
+        }
+    })
+}
 
 Enzoic.prototype.makeRestCall = function(sPath, sQueryString, sMethod, sBody, fnCallback) {
 
@@ -634,7 +652,7 @@ Enzoic.prototype.calcCredentialHash = function(sUsername, sPassword, sSalt, oHas
                 fulfill(null);
             }
             else {
-                Hashing.argon2(sUsername + "$" + passwordHash, sSalt, function(err, hashResult) {
+                Hashing.argon2(sUsername.toLowerCase() + "$" + passwordHash, sSalt, function(err, hashResult) {
                     if (err) {
                         reject(err);
                     }
@@ -817,6 +835,11 @@ Enzoic.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSalt, fn
         case PasswordType.SHA256Crypt:
             if (checkSalt(sSalt)) {
                 fnCallback(null, Hashing.sha256Crypt(sPassword, sSalt));
+            }
+            break;
+        case PasswordType.AuthMeSHA256:
+            if (checkSalt(sSalt)) {
+                fnCallback(null, Hashing.authMeSHA256(sPassword, sSalt));
             }
             break;
         default:

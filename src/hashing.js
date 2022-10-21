@@ -265,6 +265,10 @@ Hashing = {
         return this.sha512(sPassword + ":" + sSalt);
     },
 
+    authMeSHA256: function(sPassword, sSalt) {
+        return "$SHA$" + sSalt + "$" + this.sha256(this.sha256(sPassword) + sSalt);
+    },
+
     argon2: function(sToHash, sSalt, fnCallback) {
         var hashType = argon2.argon2d;
         var tCost = 3;
