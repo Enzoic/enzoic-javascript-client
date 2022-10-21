@@ -284,6 +284,20 @@ enzoic.getDomainAlertSubscriptions(4 /* page size */, null /* paging token - nul
        }    
     });
 
+// get all passwords Enzoic has for the specified user 
+// returns results per https://www.enzoic.com/docs-raw-passwords-api
+enzoic.getUserPasswords("eicar_0@enzoic.com",
+    (error, userPasswordsResponse) => {
+        if (error) {
+            console.log('Error calling API: ' + error);
+        }
+        else {
+            // print user passwords
+            for (var i = 0; i < userPasswordsResponse.passwords.length; i++) {
+                console.log('Password: ' + userPasswordsResponse.passwords[i].Password + '\n');
+            }
+        }
+    }); 
 ```
 
 More information in reference format can be found below.
