@@ -5,7 +5,6 @@ var crc32 = require('crc-32');
 var xor = require('bitwise-xor');
 var md5crypt = require('nano-md5');
 var descrypt = require('./descrypt');
-var b64_sha512crypt = require('sha512crypt-node').b64_sha512crypt;
 var unixcrypt = require("unixcrypt");
 
 Hashing = {
@@ -258,7 +257,7 @@ Hashing = {
     },
 
     sha512Crypt: function(sPassword, sSalt) {
-        return b64_sha512crypt(sPassword, sSalt.substring(3));
+        return unixcrypt.encrypt(sPassword, sSalt);
     },
 
     customAlgorithm10: function(sPassword, sSalt) {
@@ -267,6 +266,10 @@ Hashing = {
 
     authMeSHA256: function(sPassword, sSalt) {
         return "$SHA$" + sSalt + "$" + this.sha256(this.sha256(sPassword) + sSalt);
+    },
+
+    hmacSha1SaltAsKey: function(sPassword, sSalt) {
+        return crypto.createHmac("sha1", sSalt).update(sPassword).digest("hex");
     },
 
     argon2: function(sToHash, sSalt, fnCallback) {

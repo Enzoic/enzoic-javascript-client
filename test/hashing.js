@@ -198,19 +198,35 @@ describe("Hashing", function() {
 
     describe("#sha256Crypt()", function() {
         it("generates a correct hash", function() {
+            expect(Hashing.sha256Crypt("hashcat", "$5$GX7BopJZJxPc/KEK")).to.equal("$5$GX7BopJZJxPc/KEK$le16UF8I2Anb.rOrn22AUPWvzUETDGefUmAV8AZkGcD");
             expect(Hashing.sha256Crypt("hashcat", "$5$rounds=5000$GX7BopJZJxPc/KEK")).to.equal("$5$rounds=5000$GX7BopJZJxPc/KEK$le16UF8I2Anb.rOrn22AUPWvzUETDGefUmAV8AZkGcD");
+            expect(Hashing.sha256Crypt("hashcat", "$5$rounds=4000$GX7BopJZJxPc/KEK")).to.equal("$5$rounds=4000$GX7BopJZJxPc/KEK$sn.Ds3.Gebi0n6vih/PyOUqlagz5FGk1ITvNh7f1ZMC");
         });
     });
 
     describe("#sha512Crypt()", function() {
         it("generates a correct hash", function() {
             expect(Hashing.sha512Crypt("hashcat", "$6$52450745")).to.equal("$6$52450745$k5ka2p8bFuSmoVT1tzOyyuaREkkKBcCNqoDKzYiJL9RaE8yMnPgh2XzzF0NDrUhgrcLwg78xs1w5pJiypEdFX/");
+            expect(Hashing.sha512Crypt("hashcat", "$6$rounds=5000$52450745")).to.equal("$6$rounds=5000$52450745$k5ka2p8bFuSmoVT1tzOyyuaREkkKBcCNqoDKzYiJL9RaE8yMnPgh2XzzF0NDrUhgrcLwg78xs1w5pJiypEdFX/");
+            expect(Hashing.sha512Crypt("hashcat", "$6$rounds=4000$52450745")).to.equal("$6$rounds=4000$52450745$SpwN1flz4M8T.VckR9l.UofKPTtPvUx3ZfNSAQ.ruUsFBCvC1mz49quqhSrPjK4p25hfLcDZF/86iiA0n38Dh/");
         });
     });
 
     describe("#customAlgorithm10()", function() {
         it("generates a correct hash", function() {
             expect(Hashing.customAlgorithm10("chatbooks", "NqXCvAHUpAWAco3hVTG5Sg0FfmJRQPKi0LvcHwylzXHhSNuWwvYdMSSGzswi0ZdJ")).to.equal("bd17b9d14010a1d4f8c8077f1be1e20b9364d9979bbcf8591337e952cc6037026aa4a2025543d39169022344b4dd1d20f499395533e35705296034bbf7e7d663");
+        });
+    });
+
+    describe("#authMeSHA256()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.authMeSHA256("hashcat", "7218532375810603")).to.equal("$SHA$7218532375810603$bfede293ecf6539211a7305ea218b9f3f608953130405cda9eaba6fb6250f824");
+        });
+    });
+
+    describe("#hmacSHA1SaltAsKey()", function() {
+        it("generates a correct hash", function() {
+            expect(Hashing.hmacSha1SaltAsKey("hashcat", "1234")).to.equal("d89c92b4400b15c39e462a8caa939ab40c3aeeea");
         });
     });
 

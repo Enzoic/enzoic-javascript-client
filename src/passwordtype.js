@@ -39,8 +39,9 @@ PasswordType = {
     CustomAlgorithm9: 38,
     SHA512Crypt: 39,
     CustomAlgorithm10: 40,
-    SHA256Crypt: 41,
+    HMACSHA1_SaltAsKey: 41,
     AuthMeSHA256: 42,
+    SHA256Crypt: 43,
 
     Unknown: 97,
     UnusablePassword: 98,

@@ -832,9 +832,9 @@ Enzoic.prototype.calcPasswordHash = function(iPasswordType, sPassword, sSalt, fn
                 fnCallback(null, Hashing.customAlgorithm10(sPassword, sSalt));
             }
             break;
-        case PasswordType.SHA256Crypt:
+        case PasswordType.HMACSHA1_SaltAsKey:
             if (checkSalt(sSalt)) {
-                fnCallback(null, Hashing.sha256Crypt(sPassword, sSalt));
+                fnCallback(null, Hashing.hmacSHA1SaltAsKey(sPassword, sSalt));
             }
             break;
         case PasswordType.AuthMeSHA256:
