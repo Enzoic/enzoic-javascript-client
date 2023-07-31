@@ -68,7 +68,7 @@ enzoic.checkCredentials('test@enzoic.com', 'password-to-test',
 enzoic.checkCredentialsEx('test@enzoic.com', 'password-to-test', 
     {
         lastCheckDate: new Date('2016-12-10T02:05:03.000Z'), 
-        excludeHashAlgorithms: [8, 11, 12] // see https://www.enzoic.com/docs-credentials-api/#PasswordHashType 
+        excludeHashAlgorithms: [8, 11, 12] // see https://docs.enzoic.com/enzoic-api-developer-documentation/api-reference/password-hash-algorithms 
     },
     (error, credsCompromised) => {
         if (error) {
@@ -105,7 +105,8 @@ enzoic.getExposuresForUser('test@enzoic.com',
     });
 
 // get all exposures for a given domain - second parameter indicates whether to include exposure details in results
-// returns paged results per https://www.enzoic.com/docs-exposures-api/#get-exposures-for-domain
+// returns paged results per 
+// https://docs.enzoic.com/enzoic-api-developer-documentation/api-reference/exposures-api/get-exposures-for-a-domain
 enzoic.getExposuresForDomainEx('enzoic.com', true, 20, null,
     (error, result) => {
         if (error) {
@@ -130,7 +131,8 @@ enzoic.getExposuresForDomainEx('enzoic.com', true, 20, null,
     });
 
 // get all users exposed for a given domain
-// returns paged results per https://www.enzoic.com/docs-exposures-api/#get-exposed-users-for-domain
+// returns paged results per 
+// https://docs.enzoic.com/enzoic-api-developer-documentation/api-reference/exposures-api/get-exposures-for-all-email-addresses-in-a-domain
 enzoic.getExposedUsersForDomain('enzoic.com', 20, null, 
     (error, exposedUsers) => {
        if (error) {
@@ -197,7 +199,8 @@ enzoic.isUserSubscribedForAlerts(arrUsernameSHA256Hashes[0],
     });
 
 // get all users subscribed for alerts on this account 
-// returns paged results per https://www.enzoic.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions
+// returns paged results per 
+// https://docs.enzoic.com/enzoic-api-developer-documentation/api-reference/breach-monitoring-api/breach-monitoring-by-user#retrieve-current-breach-alert-subscriptions
 enzoic.getUserAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, 
     (error, subscriptionsResponse) => {
        if (error) {
@@ -263,7 +266,8 @@ enzoic.isDomainSubscribedForAlerts(arrDomains[0],
     });
 
 // get all users subscribed for alerts on this account 
-// returns pages results per https://www.enzoic.com/docs-exposure-alerts-service-api/#get-exposure-subscriptions-domains
+// returns pages results per 
+// https://docs.enzoic.com/enzoic-api-developer-documentation/api-reference/breach-monitoring-api/breach-monitoring-by-domain#retrieve-current-breach-alert-subscriptions
 enzoic.getDomainAlertSubscriptions(4 /* page size */, null /* paging token - null on first call */, 
     (error, subscriptionsResponse) => {
        if (error) {
@@ -285,8 +289,9 @@ enzoic.getDomainAlertSubscriptions(4 /* page size */, null /* paging token - nul
     });
 
 // get all passwords Enzoic has for the specified user 
-// returns results per https://www.enzoic.com/docs-raw-passwords-api
-enzoic.getUserPasswords("eicar_0@enzoic.com",
+// returns results per 
+// https://docs.enzoic.com/enzoic-api-developer-documentation/api-reference/credentials-api/cleartext-credentials-api
+enzoic.getUserPasswordsEx("eicar_0@enzoic.com", true,
     (error, userPasswordsResponse) => {
         if (error) {
             console.log('Error calling API: ' + error);

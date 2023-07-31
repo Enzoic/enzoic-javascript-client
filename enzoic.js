@@ -578,9 +578,14 @@ Enzoic.prototype.getCredentialsAlertSubscriptionsForUser = function(sUsername, f
 };
 
 Enzoic.prototype.getUserPasswords = function(sUsername, fnCallback) {
+    this.getUserPasswordsEx(sUsername, false, fnCallback);
+}
+
+Enzoic.prototype.getUserPasswordsEx = function(sUsername, bIncludeExposureDetails, fnCallback) {
     var path = '/v1/accounts';
 
-    var queryString = 'username=' + Hashing.sha256(sUsername.toLowerCase()) + '&includePasswords=1';
+    var queryString = 'username=' + Hashing.sha256(sUsername.toLowerCase()) + '&includePasswords=1' +
+        (bIncludeExposureDetails ? '&includeExposureDetails=1' : '');
 
     this.makeRestCall(path, queryString, 'GET', null, function (err, response) {
         if (err) {

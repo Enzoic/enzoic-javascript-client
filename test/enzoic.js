@@ -338,7 +338,7 @@ describe("Enzoic", function () {
                         "title": "funsurveys.net",
                         "entries": 5123,
                         "date": "2015-05-01T00:00:00.000Z",
-                        "category": "Surveys",
+                        "category": "Marketing",
                         "passwordType": "Cleartext",
                         "exposedData": [
                             "Emails",
@@ -346,7 +346,9 @@ describe("Enzoic", function () {
                         ],
                         "dateAdded": "2016-09-16T15:36:54.000Z",
                         "sourceURLs": [],
-                        "domainsAffected": 683
+                        "domainsAffected": 683,
+                        "source": "Unspecified",
+                        "sourceFileCount": 1
                     }
                 );
                 done();
@@ -400,7 +402,7 @@ describe("Enzoic", function () {
                         "title": "funsurveys.net",
                         "entries": 5123,
                         "date": "2015-05-01T00:00:00.000Z",
-                        "category": "Surveys",
+                        "category": "Marketing",
                         "passwordType": "Cleartext",
                         "exposedData": [
                             "Emails",
@@ -408,7 +410,9 @@ describe("Enzoic", function () {
                         ],
                         "dateAdded": "2016-09-16T15:36:54.000Z",
                         "sourceURLs": [],
-                        "domainsAffected": 683
+                        "domainsAffected": 683,
+                        "source": "Unspecified",
+                        "sourceFileCount": 1
                     }
                 );
                 done();
@@ -450,7 +454,9 @@ describe("Enzoic", function () {
                     exposedData: ["Emails", "Passwords", "Usernames", "Website Activity"],
                     entries: 81967007,
                     domainsAffected: 1219053,
-                    sourceURLs: []
+                    sourceURLs: [],
+                    source: "Unspecified",
+                    sourceFileCount: 1
                 });
                 done();
             });
@@ -1259,7 +1265,7 @@ describe("Enzoic", function () {
                         "title": "funsurveys.net",
                         "entries": 5123,
                         "date": "2015-05-01T00:00:00.000Z",
-                        "category": "Surveys",
+                        "category": "Marketing",
                         "passwordType": "Cleartext",
                         "exposedData": [
                             "Emails",
@@ -1267,7 +1273,9 @@ describe("Enzoic", function () {
                         ],
                         "dateAdded": "2016-09-16T15:36:54.000Z",
                         "sourceURLs": [],
-                        "domainsAffected": 683
+                        "domainsAffected": 683,
+                        "source": "Unspecified",
+                        "sourceFileCount": 1
                     }
                 );
                 done();
@@ -1295,7 +1303,6 @@ describe("Enzoic", function () {
 
     describe("#getUserPasswords()", function (done) {
         var enzoic = getEnzoic();
-        var pagingToken = null;
 
         it("gets correct result", function (done) {
             enzoic.getUserPasswords("eicar_0@enzoic.com", function (err, result) {
@@ -1354,6 +1361,167 @@ describe("Enzoic", function () {
             var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
             bogusServer.getUserPasswords("eicar_0@enzoic.com", function (err, result) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+                done();
+            });
+        });
+    });
+
+    describe("#getUserPasswordsEx()", function (done) {
+        var enzoic = getEnzoic();
+        var pagingToken = null;
+
+        it("gets correct result", function (done) {
+            enzoic.getUserPasswordsEx("eicar_0@enzoic.com", true, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result.passwords.length).to.equal(4);
+                expect(result.lastBreachDate).to.equal("2022-10-14T07:02:40.000Z");
+                expect(result.passwords).to.deep.equal([
+                    {
+                        "hashType": 0,
+                        "salt": "",
+                        "password": "password123",
+                        "exposures": [
+                            {
+                                "category": "Testing Ignore",
+                                "date": null,
+                                "dateAdded": "2022-10-14T06:59:28.000Z",
+                                "domainsAffected": 1,
+                                "entries": 5,
+                                "exposedData": [
+                                    "Emails",
+                                    "Passwords"
+                                ],
+                                "id": "634908d06715cc1b5b201a1a",
+                                "passwordType": "MD5",
+                                "source": "Testing - Ignore",
+                                "sourceFileCount": 1,
+                                "sourceURLs": [],
+                                "title": "enzoic test breach 1",
+                            },
+                            {
+                                "category": "Testing Ignore",
+                                "date": null,
+                                "dateAdded": "2022-10-14T06:59:30.000Z",
+                                "domainsAffected": 1,
+                                "entries": 2,
+                                "exposedData": [
+                                    "Emails",
+                                    "Passwords"
+                                ],
+                                "id": "634908d2e0513eb0788aa0b9",
+                                "passwordType": "Cleartext",
+                                "source": "Testing - Ignore",
+                                "sourceFileCount": 1,
+                                "sourceURLs": [],
+                                "title": "enzoic test breach 5"
+                            }                        ]
+                    },
+                    {
+                        "hashType": 0,
+                        "salt": "",
+                        "password": "g0oD_on3",
+                        "exposures": [
+                            {
+                                "category": "Testing Ignore",
+                                "date": null,
+                                "dateAdded": "2022-10-14T06:59:30.000Z",
+                                "domainsAffected": 1,
+                                "entries": 2,
+                                "exposedData": [
+                                    "Emails",
+                                    "Passwords"
+                                ],
+                                "id": "634908d2e0513eb0788aa0b9",
+                                "passwordType": "Cleartext",
+                                "source": "Testing - Ignore",
+                                "sourceFileCount": 1,
+                                "sourceURLs": [],
+                                "title": "enzoic test breach 5"
+                            }
+                        ]
+                    },
+                    {
+                        "hashType": 0,
+                        "salt": "",
+                        "password": "Easy2no",
+                        "exposures": [
+                            {
+                                "category": "Testing Ignore",
+                                "date": null,
+                                "dateAdded": "2022-10-14T06:59:30.000Z",
+                                "domainsAffected": 1,
+                                "entries": 4,
+                                "exposedData": [
+                                    "Emails",
+                                    "Passwords"
+                                ],
+                                "id": "634908d26715cc1b5b201a1d",
+                                "passwordType": "MD5",
+                                "source": "Testing - Ignore",
+                                "sourceFileCount": 1,
+                                "sourceURLs": [],
+                                "title": "enzoic test breach 4"
+                            }
+                        ]
+                    },
+                    {
+                        "hashType": 0,
+                        "salt": "",
+                        "password": "123456",
+                        "exposures": [
+                            {
+                                "category": "Testing Ignore",
+                                "date": null,
+                                "dateAdded": "2022-10-14T06:59:28.000Z",
+                                "domainsAffected": 1,
+                                "entries": 5,
+                                "exposedData": [
+                                    "Emails",
+                                    "Passwords"
+                                ],
+                                "id": "634908d0e0513eb0788aa0b5",
+                                "passwordType": "MD5",
+                                "source": "Testing - Ignore",
+                                "sourceFileCount": 1,
+                                "sourceURLs": [],
+                                "title": "enzoic test breach 2"
+                            },
+                            {
+                                "category": "Testing Ignore",
+                                "date": null,
+                                "dateAdded": "2022-10-14T07:02:40.000Z",
+                                "domainsAffected": 1,
+                                "entries": 3,
+                                "exposedData": [
+                                    "Emails",
+                                    "Passwords"
+                                ],
+                                "id": "63490990e0513eb0788aa0d1",
+                                "passwordType": "Cleartext",
+                                "source": "Testing - Ignore",
+                                "sourceFileCount": 1,
+                                "sourceURLs": [],
+                                "title": "enzoic test breach 3",
+                            }                        ]
+                    }
+                ]);
+                done();
+            });
+        });
+
+        it("handles negative result correctly", function (done) {
+            enzoic.getUserPasswordsEx("@@bogus-user@@", true, function (err, result) {
+                expect(err).to.equal(null);
+                expect(result).to.equal(false);
+                done();
+            });
+        });
+
+        it("handles error properly", function (done) {
+            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            bogusServer.getUserPasswordsEx("eicar_0@enzoic.com", true, function (err, result) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
                 done();
             });

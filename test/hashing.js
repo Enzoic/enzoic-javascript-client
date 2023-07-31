@@ -108,6 +108,7 @@ describe("Hashing", function() {
 
     describe("#desCrypt()", function() {
         it("generates a correct hash", function() {
+            expect(Hashing.desCrypt("qwerty", "yD")).to.equal("yDba8kDA7NUDQ");
             expect(Hashing.desCrypt("password", "X.")).to.equal("X.OPW8uuoq5N.");
         });
     });
