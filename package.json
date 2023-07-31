@@ -1,6 +1,6 @@
 {
   "name": "@enzoic/enzoic",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "description": "JavaScript library for Enzoic API",
   "main": "enzoic.js",
   "scripts": {
