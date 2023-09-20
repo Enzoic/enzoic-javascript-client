@@ -1,11 +1,11 @@
-var crypto = require('crypto');
-var bcrypt = require('bcrypt-nodejs');
-var argon2 = require('argon2');
-var crc32 = require('crc-32');
-var xor = require('bitwise-xor');
-var md5crypt = require('nano-md5');
-var descrypt = require('./descrypt');
-var unixcrypt = require("unixcrypt");
+const crypto = require('crypto');
+const bcrypt = require('bcrypt-nodejs');
+const argon2 = require('argon2');
+const crc32 = require('crc-32');
+const xor = require('bitwise-xor');
+const md5crypt = require('nano-md5');
+const descrypt = require('./descrypt');
+const unixcrypt = require("unixcrypt");
 
 Hashing = {
     md5: function(sToHash, bBinary) {
@@ -48,21 +48,26 @@ Hashing = {
         return this.md5(this.md5(sPassword) + sSalt);
     },
 
-    bcrypt: function(sPassword, sSalt, fnCallback) {
-        var twoy = false;
-        var processedSalt = sSalt;
+    bcrypt: async function(sPassword, sSalt) {
+        let twoy = false;
+        let processedSalt = sSalt;
         if (sSalt.substring(0, 3) === '$2y') {
             twoy = true;
             processedSalt = '$2a' + sSalt.substring(3);
         }
 
-        return bcrypt.hash(sPassword, processedSalt, null, function(err, hash) {
-            if (twoy === true) {
-                fnCallback(err, '$2y' + hash.substring(3));
-            }
-            else {
-                fnCallback(err, hash);
-            }
+        return new Promise((resolve, reject) => {
+            bcrypt.hash(sPassword, processedSalt, null, function(err, hash) {
+                if (err) {
+                    reject(err);
+                }
+                else if (twoy === true) {
+                    resolve("$2y" + hash.substring(3));
+                }
+                else {
+                    resolve(hash);
+                }
+            });
         });
     },
 
@@ -71,27 +76,27 @@ Hashing = {
     },
 
     phpbb3: function(sPassword, sSalt) {
-        if (sSalt.substr(0, 3) != '$H$') {
+        if (sSalt.substr(0, 3) !== '$H$') {
             return "";
         }
 
-        var itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-        var count = Math.pow(2, itoa64.indexOf(sSalt[3]));
-        var justsalt = sSalt.substr(4);
-        var passwordBuffer = new Buffer(sPassword);
+        const itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        let count = Math.pow(2, itoa64.indexOf(sSalt[3]));
+        let justsalt = sSalt.substr(4);
+        let passwordBuffer = new Buffer(sPassword);
 
-        var hash = Hashing.md5(justsalt + sPassword, true);
+        let hash = Hashing.md5(justsalt + sPassword, true);
         while (count-- > 0) {
             hash = Hashing.md5(Buffer.concat([hash, passwordBuffer]), true);
         }
 
-        var hashout = '';
-        var i = 0;
-        var count = 16;
+        let hashout = '';
+        let i = 0;
+        count = 16;
 
         do
         {
-            var value = hash[i++];
+            let value = hash[i++];
             hashout += itoa64[value & 0x3f];
 
             if (i < count)
@@ -126,8 +131,8 @@ Hashing = {
     },
 
     customAlgorithm1: function(sPassword, sSalt) {
-        var hash1 = Hashing.sha512(sPassword + sSalt, false);
-        var hash2 = Hashing.whirlpool(sSalt + sPassword, false);
+        const hash1 = Hashing.sha512(sPassword + sSalt, false);
+        const hash2 = Hashing.whirlpool(sSalt + sPassword, false);
         return xor(new Buffer(hash1, 'hex'), new Buffer(hash2, 'hex')).toString('hex');
     },
 
@@ -135,10 +140,8 @@ Hashing = {
         return Hashing.md5(sPassword + sSalt, false);
     },
 
-    customAlgorithm4: function(sPassword, sSalt, fnCallback) {
-        return Hashing.bcrypt(Hashing.md5(sPassword), sSalt, function(err, hash) {
-            fnCallback(err, hash);
-        });
+    customAlgorithm4: function(sPassword, sSalt) {
+        return Hashing.bcrypt(Hashing.md5(sPassword), sSalt);
     },
 
     customAlgorithm5: function(sPassword, sSalt) {
@@ -158,15 +161,15 @@ Hashing = {
     },
 
     mySqlPre4_1: function(sPassword) {
-        var result1;
-        var result2;
-        var nr = 1345345333;
-        var add = 7;
-        var nr2 = 0x12345671;
-        var tmp;
+        let result1;
+        let result2;
+        let nr = 1345345333;
+        let add = 7;
+        let nr2 = 0x12345671;
+        let tmp;
 
-        for (var i = 0; i < sPassword.length; i++) {
-            var c = sPassword.charCodeAt(i);
+        for (let i = 0; i < sPassword.length; i++) {
+            let c = sPassword.charCodeAt(i);
             if (c === ' ' || c === '\t') {
                 continue;
             }
@@ -188,9 +191,9 @@ Hashing = {
     },
 
     peopleSoft: function(sPassword) {
-        var buf = new ArrayBuffer(sPassword.length*2);
-        var bufView = new Uint16Array(buf);
-        for (var i=0, strLen=sPassword.length; i < strLen; i++) {
+        let buf = new ArrayBuffer(sPassword.length*2);
+        let bufView = new Uint16Array(buf);
+        for (let i=0, strLen=sPassword.length; i < strLen; i++) {
             bufView[i] = sPassword.charCodeAt(i);
         }
 
@@ -226,9 +229,9 @@ Hashing = {
     },
 
     ntlm: function(sPassword) {
-        var buf = new ArrayBuffer(sPassword.length*2);
-        var bufView = new Uint16Array(buf);
-        for (var i=0, strLen=sPassword.length; i < strLen; i++) {
+        let buf = new ArrayBuffer(sPassword.length*2);
+        let bufView = new Uint16Array(buf);
+        for (let i = 0, strLen=sPassword.length; i < strLen; i++) {
             bufView[i] = sPassword.charCodeAt(i);
         }
         return new Buffer(crypto.createHash('md4').update(new Buffer(buf)).digest("")).toString("hex");
@@ -272,27 +275,27 @@ Hashing = {
         return crypto.createHmac("sha1", sSalt).update(sPassword).digest("hex");
     },
 
-    argon2: function(sToHash, sSalt, fnCallback) {
-        var hashType = argon2.argon2d;
-        var tCost = 3;
-        var mCost = 1024;
-        var threads = 2;
-        var hashLength = 20;
-        var justSalt = sSalt;
+    argon2: async function(sToHash, sSalt) {
+        let hashType = argon2.argon2d;
+        let tCost = 3;
+        let mCost = 1024;
+        let threads = 2;
+        let hashLength = 20;
+        let justSalt = sSalt;
 
         if (sSalt.indexOf("$argon2") === 0) {
-            var saltComponents = sSalt.split('$');
+            const saltComponents = sSalt.split('$');
 
             if (saltComponents.length === 5) {
-                var justSalt = Buffer.from(saltComponents[4], "base64");
+                justSalt = Buffer.from(saltComponents[4], "base64");
 
                 if (saltComponents[1] === 'argon2i')
                     hashType = argon2.argon2i;
 
-                var saltParams = saltComponents[3].split(',');
-                for (var i = 0; i < saltParams.length; i++) {
-                    var saltValues = saltParams[i].split('=');
-                    var intValue = parseInt(saltValues[1]);
+                const saltParams = saltComponents[3].split(',');
+                for (let i = 0; i < saltParams.length; i++) {
+                    const saltValues = saltParams[i].split('=');
+                    const intValue = parseInt(saltValues[1]);
 
                     if (!isNaN(intValue)) {
                         switch (saltValues[0]) {
@@ -314,27 +317,23 @@ Hashing = {
             }
         }
 
-        argon2.hash(sToHash, {
+        return argon2.hash(sToHash, {
             salt: Buffer.from(justSalt),
             type: hashType,
             hashLength: hashLength,
             timeCost: tCost,
             memoryCost: mCost,
             parallelism: threads
-        }).then(hash => {
-            fnCallback(null, hash);
-        }).catch(err =>  {
-            fnCallback(err, "");
         });
     },
 
     intToHex: function(d, padding) {
-        var number = d;
+        let number = d;
         if (number < 0) {
             number = 0xffffffff + number + 1;
         }
 
-        var hex = Number(number).toString(16);
+        let hex = Number(number).toString(16);
         padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
 
         while (hex.length < padding) {
@@ -344,25 +343,14 @@ Hashing = {
         return hex;
     },
 
-    aes256Encrypt: function(sToEncrypt, sKey, fnCallback) {
-        try {
-            crypto.randomBytes(8, (err, buf) => {
-                if (err) {
-                    fnCallback(err);
-                }
-                else {
-                    var iv = buf.toString('hex');
-                    var cipher = crypto.createCipheriv('aes256', sKey, iv);
-                    var encrypted = cipher.update(sToEncrypt, 'utf8', 'hex');
-                    encrypted += cipher.final('hex');
+    aes256Encrypt: async function(sToEncrypt, sKey) {
+        const buf = await crypto.randomBytes(8);
+        const iv = buf.toString('hex');
+        const cipher = crypto.createCipheriv('aes256', sKey, iv);
+        let encrypted = cipher.update(sToEncrypt, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
 
-                    fnCallback(null, iv + encrypted);
-                }
-            });
-        }
-        catch (err) {
-            fnCallback(err);
-        }
+        return iv + encrypted;
     }
 };
 

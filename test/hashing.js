@@ -1,5 +1,5 @@
-var expect = require('chai').expect;
-var hashing = require('../src/hashing.js');
+const expect = require('chai').expect;
+const hashing = require('../src/hashing.js');
 
 describe("Hashing", function() {
     describe("#md5()", function() {
@@ -51,12 +51,9 @@ describe("Hashing", function() {
     });
 
     describe("#bcrypt()", function() {
-        it("generates a correct hash", function(done) {
-            Hashing.bcrypt("12345", "$2a$12$2bULeXwv2H34SXkT1giCZe", function(err, value) {
-                expect(err).to.equal(null);
-                expect(value).to.equal("$2a$12$2bULeXwv2H34SXkT1giCZeJW7A6Q0Yfas09wOCxoIC44fDTYq44Mm");
-                done();
-            });
+        it("generates a correct hash", async function() {
+            expect(await Hashing.bcrypt("12345", "$2a$12$2bULeXwv2H34SXkT1giCZe"))
+                .to.equal("$2a$12$2bULeXwv2H34SXkT1giCZeJW7A6Q0Yfas09wOCxoIC44fDTYq44Mm");
         });
     });
 
@@ -79,12 +76,9 @@ describe("Hashing", function() {
     });
 
     describe("#customAlgorithm4()", function() {
-        it("generates a correct hash", function(done) {
-            Hashing.customAlgorithm4("1234", "$2y$12$Yjk3YjIzYWIxNDg0YWMzZO", function(err, value) {
-                expect(err).to.equal(null);
-                expect(value).to.equal("$2y$12$Yjk3YjIzYWIxNDg0YWMzZOpp/eAMuWCD3UwX1oYgRlC1ci4Al970W");
-                done();
-            });
+        it("generates a correct hash", async function() {
+            expect(await Hashing.customAlgorithm4("1234", "$2y$12$Yjk3YjIzYWIxNDg0YWMzZO"))
+                .to.equal("$2y$12$Yjk3YjIzYWIxNDg0YWMzZOpp/eAMuWCD3UwX1oYgRlC1ci4Al970W");
         });
     });
 
@@ -243,52 +237,23 @@ describe("Hashing", function() {
     });
 
     describe("#argon2()", function() {
-        it("generates a correct hash with plain salt and default params", function(done) {
-            Hashing.argon2("123456", "saltysalt", function (err, hash) {
-                try {
-                    expect(hash).to.equal("$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0$EklGIPtCSWb3IS+q4IQ7rwrwm2o");
-                    done();
-                }
-                catch(ex) {
-                    done(ex);
-                }
-            });
+        it("generates a correct hash with plain salt and default params", async function() {
+            expect(await Hashing.argon2("123456", "saltysalt")).to.equal("$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0$EklGIPtCSWb3IS+q4IQ7rwrwm2o");
         });
 
-        it("generates a correct hash with parameterized salt and default params", function(done) {
-            Hashing.argon2("123456", "$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0", function(err, hash) {
-                try {
-                    expect(hash).to.equal("$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0$EklGIPtCSWb3IS+q4IQ7rwrwm2o");
-                    done();
-                }
-                catch(ex) {
-                    done(ex);
-                }
-            });
+        it("generates a correct hash with parameterized salt and default params", async function() {
+            expect(await Hashing.argon2("123456", "$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0"))
+                .to.equal("$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0$EklGIPtCSWb3IS+q4IQ7rwrwm2o");
         });
 
-        it("generates a correct hash with parameterized salt and argon2i params", function(done) {
-            Hashing.argon2("password", "$argon2i$v=19$m=65536,t=2,p=4,l=24$c29tZXNhbHQ", function(err, hash) {
-                try {
-                    expect(hash).to.equal("$argon2i$v=19$m=65536,t=2,p=4$c29tZXNhbHQ$RdescudvJCsgt3ub+b+dWRWJTmaaJObG");
-                    done();
-                }
-                catch(ex) {
-                    done(ex);
-                }
-            });
+        it("generates a correct hash with parameterized salt and argon2i params", async function() {
+            expect(await Hashing.argon2("password", "$argon2i$v=19$m=65536,t=2,p=4,l=24$c29tZXNhbHQ"))
+                .to.equal("$argon2i$v=19$m=65536,t=2,p=4$c29tZXNhbHQ$RdescudvJCsgt3ub+b+dWRWJTmaaJObG");
         });
 
-        it("generates a correct hash with parameterized salt with invalid params", function(done) {
-            Hashing.argon2("123456", "$argon2d$v=19$m=d2,t=ejw,p=2$c2FsdHlzYWx0", function(err, hash) {
-                try {
-                    expect(hash).to.equal("$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0$EklGIPtCSWb3IS+q4IQ7rwrwm2o");
-                    done();
-                }
-                catch(ex) {
-                    done(ex);
-                }
-            });
+        it("generates a correct hash with parameterized salt with invalid params", async function() {
+            expect(await Hashing.argon2("123456", "$argon2d$v=19$m=d2,t=ejw,p=2$c2FsdHlzYWx0"))
+                .to.equal("$argon2d$v=19$m=1024,t=3,p=2$c2FsdHlzYWx0$EklGIPtCSWb3IS+q4IQ7rwrwm2o");
         });
     });
 

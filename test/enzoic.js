@@ -1,16 +1,22 @@
-var expect = require("chai").expect;
-var Enzoic = require("../enzoic.js");
-var PasswordType = require("../src/passwordtype.js");
-var Hashing = require("../src/hashing.js");
+const expect = require("chai").expect;
+const Enzoic = require("../enzoic.js");
+const PasswordType = require("../src/passwordtype.js");
+const Hashing = require("../src/hashing.js");
 
 //
 // These are actually live tests and require a valid API key and Secret to be set in your environment variables.
 // Set an env var for PP_API_KEY and PP_API_SECRET with the respective values prior to running the tests.
 //
 describe("Enzoic", function () {
-    describe("constructor", function () {
-        it("throws exception on missing API key and Secret", function () {
-            var error = false;
+    this.timeout(20000);
+
+    beforeEach(() => {
+        this.enzoic = getEnzoic();
+    });
+
+    describe("constructor", () => {
+        it("throws exception on missing API key and Secret", () => {
+            let error = false;
             try {
                 new Enzoic();
             }
@@ -22,8 +28,8 @@ describe("Enzoic", function () {
             expect(error).to.equal(true);
         });
 
-        it("instantiates correctly", function () {
-            var enzoic = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET);
+        it("instantiates correctly", () => {
+            const enzoic = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET);
             expect(enzoic).to.be.a("Object");
             expect(enzoic).to.have.property("apiKey");
             expect(enzoic).to.have.property("secret");
@@ -32,52 +38,41 @@ describe("Enzoic", function () {
             expect(enzoic.host).to.equal("api.enzoic.com");
         });
 
-        it("works with alternate base API host", function () {
-            var enzoic = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "api-alt.enzoic.com");
+        it("works with alternate base API host", () => {
+            const enzoic = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "api-alt.enzoic.com");
             expect(enzoic.host).to.equal("api-alt.enzoic.com");
         });
     });
 
-    describe("#checkPassword()", function () {
-        var enzoic = getEnzoic();
-
-        it("gets correct positive result", function (done) {
-            enzoic.checkPassword("123456", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(true);
-                done();
-            });
+    describe("#checkPassword()", () => {
+        it("gets correct positive result", async () => {
+            const result = await this.enzoic.checkPassword("123456");
+            expect(result).to.equal(true);
         });
 
-        it("gets correct negative result", function (done) {
-            enzoic.checkPassword("kjdlkjdlksjdlskjdlskjslkjdslkdjslkdjslkd", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
-            });
+        it("gets correct negative result", async () => {
+            const result = await this.enzoic.checkPassword("kjdlkjdlksjdlskjdlskjslkjdslkdjslkdjslkd");
+            expect(result).to.equal(false);
         });
 
-        it("handles errors properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles errors properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.checkPassword("123456", function (err, result) {
+            try {
+                const result = await bogusServer.checkPassword("123456");
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#checkCredentials()", function () {
-        this.timeout(20000);
-        var enzoic = getEnzoic();
-
-        it("gets correct positive results", async function () {
+    describe("#checkCredentials()", () => {
+        it("gets correct positive results", async () => {
             const promises = [];
             for (let i = 1; i <= 40; i++) {
                 if ([4, 9, 12, 15].indexOf(i) < 0) {
-                    promises.push(new Promise((resolve, reject) => enzoic.checkCredentials("eicar_" + i + "@enzoic.com", "123456", function (err, result) {
-                        if (err) reject(err); else resolve(result);
-                    })));
+                    promises.push(this.enzoic.checkCredentials("eicar_" + i + "@enzoic.com", "123456"));
                 }
             }
 
@@ -86,13 +81,11 @@ describe("Enzoic", function () {
             for (let i = 0; i < results.length; i++) expect(results[i]).to.equal(true);
         });
 
-        it("gets correct negative result", async function () {
+        it("gets correct negative result", async () => {
             const promises = [];
             for (let i = 1; i <= 32; i++) {
                 if ([4, 9, 12, 15].indexOf(i) < 0) {
-                    promises.push(new Promise((resolve, reject) => enzoic.checkCredentials("eicar_" + i + "@enzoic.com", "1234561212", function (err, result) {
-                        if (err) reject(err); else resolve(result);
-                    })));
+                    promises.push(this.enzoic.checkCredentials("eicar_" + i + "@enzoic.com", "1234561212"));
                 }
             }
 
@@ -101,463 +94,385 @@ describe("Enzoic", function () {
             for (let i = 0; i < results.length; i++) expect(results[i]).to.equal(false);
         });
 
-        it("handles errors properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles errors properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.checkCredentials("eicar_1@enzoic.com", "123456", function (err, result) {
+            try {
+                const result = await bogusServer.checkCredentials("eicar_1@enzoic.com", "123456");
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#checkCredentialsEx()", function () {
-        this.timeout(10000);
-
-        var enzoic = getEnzoic();
-
-        it("gets correct positive result with no options", function (done) {
-            enzoic.checkCredentialsEx("testpwdpng445", "testpwdpng4452", {}, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(true);
-                done();
-            });
+    describe("#checkCredentialsEx()", () => {
+        it("gets correct positive result with no options", async () => {
+            const result = await this.enzoic.checkCredentialsEx("testpwdpng445", "testpwdpng4452", {});
+            expect(result).to.equal(true);
         });
 
-        it("gets correct negative result with no options", function (done) {
-            enzoic.checkCredentialsEx("testpwdpng445", "123456122", {}, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
-            });
+        it("gets correct negative result with no options", async () => {
+            const result = await this.enzoic.checkCredentialsEx("testpwdpng445", "123456122", {});
+            expect(result).to.equal(false);
         });
 
-        it("handles errors properly with no options", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles errors properly with no options", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.checkCredentialsEx("testpwdpng445", "123456", {}, function (err, result) {
-                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            try {
+                const result = await bogusServer.checkCredentialsEx("testpwdpng445", "123456", {});
+            }
+            catch (ex) {
+                expect(ex).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
 
-        it("gets correct result with hash exclusion", function (done) {
+        it("gets correct result with hash exclusion", async () => {
             // exclude the only hash type on this result
-            enzoic.checkCredentialsEx("testpwdpng445", "testpwdpng4452", {
+            const result = await this.enzoic.checkCredentialsEx("testpwdpng445", "testpwdpng4452", {
                 excludeHashAlgorithms: [7]
-            }, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
             });
+            expect(result).to.equal(false);
         });
 
-        it("gets correct result with last check date", function (done) {
-            enzoic.checkCredentialsEx("testpwdpng445", "testpwdpng4452", {
+        it("gets correct result with last check date", async () => {
+            const result = await this.enzoic.checkCredentialsEx("testpwdpng445", "testpwdpng4452", {
                 lastCheckDate: new Date("2018-03-01")
-            }, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
             });
+            expect(result).to.equal(false);
         });
 
-        it("gets correct result with last check date with different creds", function (done) {
-            enzoic.checkCredentialsEx("test@passwordping.com", "123456", {
+        it("gets correct result with last check date with different creds", async () => {
+            const result = await this.enzoic.checkCredentialsEx("test@passwordping.com", "123456", {
                 lastCheckDate: new Date()
-            }, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
             });
+            expect(result).to.equal(false);
         });
 
-        it("gets correct result with include exposures flag set", function (done) {
-            enzoic.checkCredentialsEx("test@passwordping.com", "123456", {
+        it("gets correct result with include exposures flag set", async () => {
+            const result = await this.enzoic.checkCredentialsEx("test@passwordping.com", "123456", {
                 includeExposures: true
-            }, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.deep.equal({
-                    "exposures": [
-                        "5c13f5a31d75b80f60b76533"
-                    ]
-                });
-                done();
+            });
+            expect(result).to.deep.equal({
+                "exposures": [
+                    "5c13f5a31d75b80f60b76533"
+                ]
             });
         });
     });
 
-    describe("#getExposuresForUser()", function (done) {
-        var enzoic = getEnzoic();
-
-        it("gets correct result", function (done) {
-            enzoic.getExposuresForUser("eicar", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(8);
-                expect(result.exposures.length).to.equal(8);
-                expect(result.exposures).to.deep.equal(["5820469ffdb8780510b329cc", "58258f5efdb8780be88c2c5d",
-                    "582a8e51fdb87806acc426ff", "583d2f9e1395c81f4cfa3479", "59ba1aa369644815dcd8683e",
-                    "59cae0ce1d75b80e0070957c", "5bc64f5f4eb6d894f09eae70", "5bdcb0944eb6d8a97cfacdff"]);
-                done();
-            });
+    describe("#getExposuresForUser()", () => {
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getExposuresForUser("eicar");
+            expect(result.count).to.equal(8);
+            expect(result.exposures.length).to.equal(8);
+            expect(result.exposures).to.deep.equal(["5820469ffdb8780510b329cc", "58258f5efdb8780be88c2c5d",
+                "582a8e51fdb87806acc426ff", "583d2f9e1395c81f4cfa3479", "59ba1aa369644815dcd8683e",
+                "59cae0ce1d75b80e0070957c", "5bc64f5f4eb6d894f09eae70", "5bdcb0944eb6d8a97cfacdff"]);
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposuresForUser("@@bogus-username@@", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(0);
-                expect(result.exposures.length).to.equal(0);
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getExposuresForUser("@@bogus-username@@");
+            expect(result.count).to.equal(0);
+            expect(result.exposures.length).to.equal(0);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getExposuresForUser("eicar", function (err, result) {
+            try {
+                const result = await bogusServer.getExposuresForUser("eicar");
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getExposedUsersForDomain()", function (done) {
-        var enzoic = getEnzoic();
-        var pagingToken = null;
+    describe("#getExposedUsersForDomain()", () => {
+        let pagingToken = null;
 
-        it("gets correct result", function (done) {
-            enzoic.getExposedUsersForDomain("email.tst", 2, null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(12);
-                expect(result.users.length).to.equal(2);
-                expect(result.users).to.deep.equal([
-                    {
-                        "username": "sample@email.tst",
-                        "exposures": [
-                            "57dc11964d6db21300991b78",
-                            "5805029914f33808dc802ff7",
-                            "57ffcf3c1395c80b30dd4429",
-                            "598e5b844eb6d82ea07c5783",
-                            "59bbf691e5017d2dc8a96eab",
-                            "59bc2016e5017d2dc8bdc36a",
-                            "59bebae9e5017d2dc85fc2ab",
-                            "59f36f8c4eb6d85ba0bee09c",
-                            "5bcf9af3e5017d07201e2149",
-                            "5c4f818bd3cef70e983dda1e"
-                        ]
-                    },
-                    {
-                        "username": "xxxxxxxxxx@email.tst",
-                        "exposures": [
-                            "5805029914f33808dc802ff7"
-                        ]
-                    }
-                ]);
-                expect(result.pagingToken).to.not.equal(null);
-                pagingToken = result.pagingToken;
-                done();
-            });
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getExposedUsersForDomain("email.tst", 2, null);
+            expect(result.count).to.equal(12);
+            expect(result.users.length).to.equal(2);
+            expect(result.users).to.deep.equal([
+                {
+                    "username": "sample@email.tst",
+                    "exposures": [
+                        "57dc11964d6db21300991b78",
+                        "5805029914f33808dc802ff7",
+                        "57ffcf3c1395c80b30dd4429",
+                        "598e5b844eb6d82ea07c5783",
+                        "59bbf691e5017d2dc8a96eab",
+                        "59bc2016e5017d2dc8bdc36a",
+                        "59bebae9e5017d2dc85fc2ab",
+                        "59f36f8c4eb6d85ba0bee09c",
+                        "5bcf9af3e5017d07201e2149",
+                        "5c4f818bd3cef70e983dda1e"
+                    ]
+                },
+                {
+                    "username": "xxxxxxxxxx@email.tst",
+                    "exposures": [
+                        "5805029914f33808dc802ff7"
+                    ]
+                }
+            ]);
+            expect(result.pagingToken).to.not.equal(null);
+            pagingToken = result.pagingToken;
         });
 
-        it("gets correct result for subsequent page", function (done) {
+        it("gets correct result for subsequent page", async () => {
             expect(pagingToken).to.not.equal(null);
 
-            enzoic.getExposedUsersForDomain("email.tst", 2, pagingToken, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(12);
-                expect(result.users.length).to.equal(2);
-                expect(result.users).to.deep.equal([
-                    {
-                        "username": "cbeiqvf@email.tst",
-                        "exposures": [
-                            "5805029914f33808dc802ff7"
-                        ]
-                    },
-                    {
-                        "username": "yjybey@email.tst",
-                        "exposures": [
-                            "5805029914f33808dc802ff7"
-                        ]
-                    }
-                ]);
-                done();
-            });
+            const result = await this.enzoic.getExposedUsersForDomain("email.tst", 2, pagingToken);
+            expect(result.count).to.equal(12);
+            expect(result.users.length).to.equal(2);
+            expect(result.users).to.deep.equal([
+                {
+                    "username": "cbeiqvf@email.tst",
+                    "exposures": [
+                        "5805029914f33808dc802ff7"
+                    ]
+                },
+                {
+                    "username": "yjybey@email.tst",
+                    "exposures": [
+                        "5805029914f33808dc802ff7"
+                    ]
+                }
+            ]);
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposedUsersForDomain("@@bogus-domain@@", 2, null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(0);
-                expect(result.users.length).to.equal(0);
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getExposedUsersForDomain("@@bogus-domain@@", 2, null);
+            expect(result.count).to.equal(0);
+            expect(result.users.length).to.equal(0);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getExposedUsersForDomain("email.tst", 2, null, function (err, result) {
+            try {
+                const result = await bogusServer.getExposedUsersForDomain("email.tst", 2, null);
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getExposuresForDomain()", function (done) {
-        var enzoic = getEnzoic();
-
-        it("gets correct result for no details", function (done) {
-            enzoic.getExposuresForDomain("email.tst", false, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(10);
-                expect(result.exposures.length).to.equal(10);
-                expect(result.exposures.sort()).to.deep.equal([
-                    "57ffcf3c1395c80b30dd4429",
-                    "57dc11964d6db21300991b78",
-                    "5805029914f33808dc802ff7",
-                    "598e5b844eb6d82ea07c5783",
-                    "59bbf691e5017d2dc8a96eab",
-                    "59bc2016e5017d2dc8bdc36a",
-                    "59bebae9e5017d2dc85fc2ab",
-                    "59f36f8c4eb6d85ba0bee09c",
-                    "5bcf9af3e5017d07201e2149",
-                    "5c4f818bd3cef70e983dda1e"
-                ].sort());
-                done();
-            });
+    describe("#getExposuresForDomain()", () => {
+        it("gets correct result for no details", async () => {
+            const result = await this.enzoic.getExposuresForDomain("email.tst", false);
+            expect(result.count).to.equal(10);
+            expect(result.exposures.length).to.equal(10);
+            expect(result.exposures.sort()).to.deep.equal([
+                "57ffcf3c1395c80b30dd4429",
+                "57dc11964d6db21300991b78",
+                "5805029914f33808dc802ff7",
+                "598e5b844eb6d82ea07c5783",
+                "59bbf691e5017d2dc8a96eab",
+                "59bc2016e5017d2dc8bdc36a",
+                "59bebae9e5017d2dc85fc2ab",
+                "59f36f8c4eb6d85ba0bee09c",
+                "5bcf9af3e5017d07201e2149",
+                "5c4f818bd3cef70e983dda1e"
+            ].sort());
         });
 
-        it("gets correct result for include details", function (done) {
-            enzoic.getExposuresForDomain("email.tst", true, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(10);
-                expect(result.exposures.length).to.equal(10);
-                expect(result.exposures[0]).to.deep.equal(
-                    {
-                        "id": "57dc11964d6db21300991b78",
-                        "title": "funsurveys.net",
-                        "entries": 5123,
-                        "date": "2015-05-01T00:00:00.000Z",
-                        "category": "Marketing",
-                        "passwordType": "Cleartext",
-                        "exposedData": [
-                            "Emails",
-                            "Passwords"
-                        ],
-                        "dateAdded": "2016-09-16T15:36:54.000Z",
-                        "sourceURLs": [],
-                        "domainsAffected": 683,
-                        "source": "Unspecified",
-                        "sourceFileCount": 1
-                    }
-                );
-                done();
-            });
+        it("gets correct result for include details", async () => {
+            const result = await this.enzoic.getExposuresForDomain("email.tst", true);
+            expect(result.count).to.equal(10);
+            expect(result.exposures.length).to.equal(10);
+            expect(result.exposures[0]).to.deep.equal(
+                {
+                    "id": "57dc11964d6db21300991b78",
+                    "title": "funsurveys.net",
+                    "entries": 5123,
+                    "date": "2015-05-01T00:00:00.000Z",
+                    "category": "Marketing",
+                    "passwordType": "Cleartext",
+                    "exposedData": [
+                        "Emails",
+                        "Passwords"
+                    ],
+                    "dateAdded": "2016-09-16T15:36:54.000Z",
+                    "sourceURLs": [],
+                    "domainsAffected": 683,
+                    "source": "Unspecified",
+                    "sourceFileCount": 1
+                }
+            );
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposuresForDomain("@@bogus-domain@@", false, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(0);
-                expect(result.exposures.length).to.equal(0);
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getExposuresForDomain("@@bogus-domain@@", false);
+            expect(result.count).to.equal(0);
+            expect(result.exposures.length).to.equal(0);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getExposuresForDomain("email.tst", false, function (err, result) {
+            try {
+                const result = await bogusServer.getExposuresForDomain("email.tst", false);
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getExposuresForDomainEx()", function (done) {
-        var enzoic = getEnzoic();
-
-        it("gets correct result for no details", function (done) {
-            enzoic.getExposuresForDomainEx("email.tst", false, 2, null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(10);
-                expect(result.exposures.length).to.equal(2);
-                expect(result.pagingToken).to.not.be.null;
-                expect(result.exposures.sort()).to.deep.equal([
-                    "57ffcf3c1395c80b30dd4429",
-                    "57dc11964d6db21300991b78",
-                ].sort());
-                done();
-            });
+    describe("#getExposuresForDomainEx()", () => {
+        it("gets correct result for no details", async () => {
+            const result = await this.enzoic.getExposuresForDomainEx("email.tst", false, 2, null);
+            expect(result.count).to.equal(10);
+            expect(result.exposures.length).to.equal(2);
+            expect(result.pagingToken).to.not.be.null;
+            expect(result.exposures.sort()).to.deep.equal([
+                "57ffcf3c1395c80b30dd4429",
+                "57dc11964d6db21300991b78",
+            ].sort());
         });
 
-        it("gets correct result for include details", function (done) {
-            enzoic.getExposuresForDomain("email.tst", true, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(10);
-                expect(result.exposures.length).to.equal(10);
-                expect(result.exposures[0]).to.deep.equal(
-                    {
-                        "id": "57dc11964d6db21300991b78",
-                        "title": "funsurveys.net",
-                        "entries": 5123,
-                        "date": "2015-05-01T00:00:00.000Z",
-                        "category": "Marketing",
-                        "passwordType": "Cleartext",
-                        "exposedData": [
-                            "Emails",
-                            "Passwords"
-                        ],
-                        "dateAdded": "2016-09-16T15:36:54.000Z",
-                        "sourceURLs": [],
-                        "domainsAffected": 683,
-                        "source": "Unspecified",
-                        "sourceFileCount": 1
-                    }
-                );
-                done();
-            });
+        it("gets correct result for include details", async () => {
+            const result = await this.enzoic.getExposuresForDomain("email.tst", true);
+            expect(result.count).to.equal(10);
+            expect(result.exposures.length).to.equal(10);
+            expect(result.exposures[0]).to.deep.equal(
+                {
+                    "id": "57dc11964d6db21300991b78",
+                    "title": "funsurveys.net",
+                    "entries": 5123,
+                    "date": "2015-05-01T00:00:00.000Z",
+                    "category": "Marketing",
+                    "passwordType": "Cleartext",
+                    "exposedData": [
+                        "Emails",
+                        "Passwords"
+                    ],
+                    "dateAdded": "2016-09-16T15:36:54.000Z",
+                    "sourceURLs": [],
+                    "domainsAffected": 683,
+                    "source": "Unspecified",
+                    "sourceFileCount": 1
+                }
+            );
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposuresForDomain("@@bogus-domain@@", false, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(0);
-                expect(result.exposures.length).to.equal(0);
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getExposuresForDomain("@@bogus-domain@@", false);
+            expect(result.count).to.equal(0);
+            expect(result.exposures.length).to.equal(0);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getExposuresForDomain("email.tst", false, function (err, result) {
+            try {
+                const result = await bogusServer.getExposuresForDomain("email.tst", false);
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getExposureDetails()", function () {
-        var enzoic = getEnzoic();
-
-        it("gets correct result", function (done) {
-            enzoic.getExposureDetails("5820469ffdb8780510b329cc", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.deep.equal({
-                    id: "5820469ffdb8780510b329cc",
-                    title: "last.fm",
-                    category: "Music",
-                    date: "2012-03-01T00:00:00.000Z",
-                    dateAdded: "2016-11-07T09:17:19.000Z",
-                    passwordType: "MD5",
-                    exposedData: ["Emails", "Passwords", "Usernames", "Website Activity"],
-                    entries: 81967007,
-                    domainsAffected: 1219053,
-                    sourceURLs: [],
-                    source: "Unspecified",
-                    sourceFileCount: 1
-                });
-                done();
+    describe("#getExposureDetails()", () => {
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getExposureDetails("5820469ffdb8780510b329cc");
+            expect(result).to.deep.equal({
+                id: "5820469ffdb8780510b329cc",
+                title: "last.fm",
+                category: "Music",
+                date: "2012-03-01T00:00:00.000Z",
+                dateAdded: "2016-11-07T09:17:19.000Z",
+                passwordType: "MD5",
+                exposedData: ["Emails", "Passwords", "Usernames", "Website Activity"],
+                entries: 81967007,
+                domainsAffected: 1219053,
+                sourceURLs: [],
+                source: "Unspecified",
+                sourceFileCount: 1
             });
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposureDetails("111111111111111111111111", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(null);
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getExposureDetails("111111111111111111111111");
+            expect(result).to.equal(null);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getExposureDetails("5820469ffdb8780510b329cc", function (err, result) {
+            try {
+                const result = await bogusServer.getExposureDetails("5820469ffdb8780510b329cc");
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
+            }
+        });
+    });
+
+    describe("#addUserAlertSubscriptions()", () => {
+        beforeEach(() => {
+            this.testUsers = [
+                "eicar_0@enzoic.com",
+                "eicar_1@enzoic.com"
+            ];
+        });
+
+        it("cleans up previous test data", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptions(this.testUsers);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
+        });
+
+        it("gets correct result", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUsers);
+            expect(result).to.deep.equal({
+                added: 2,
+                alreadyExisted: 0
             });
         });
-    });
 
-    describe("#addUserAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var testUserHashes = [
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44357e",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44357f"
-        ];
-
-        it("cleans up previous test data", function (done) {
-            enzoic.deleteUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("gets correct repeated result", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUsers);
+            expect(result).to.deep.equal({
+                added: 0,
+                alreadyExisted: 2
+            });
         });
 
-        it("gets correct result", function (done) {
-            enzoic.addUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 2,
-                        alreadyExisted: 0
-                    });
-                    done();
-                }
-            );
-        });
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-        it("gets correct repeated result", function (done) {
-            enzoic.addUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 0,
-                        alreadyExisted: 2
-                    });
-                    done();
-                }
-            );
-        });
-
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
-
-            bogusServer.addUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+            try {
+                const result = await bogusServer.addUserAlertSubscriptions(this.testUsers);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#addUserAlertSubscriptionsWithCustomData()", function () {
-        var enzoic = getEnzoic();
+    describe("#addUserAlertSubscriptionsWithCustomData()", () => {
+        beforeEach(() => {
+            this.testUsers = [
+                "eicar_0@enzoic.com",
+                "eicar_1@enzoic.com"
+            ];
+            this.testCustomData = "123456";
+            this.testCustomData2 = "1234567";
+        })
 
-        var testUserHashes = [
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44357e",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44357f"
-        ];
-
-        var testCustomData = "123456";
-        var testCustomData2 = "1234567";
-
-        it("cleans up previous test data", function (done) {
-            enzoic.deleteUserAlertSubscriptionsByCustomData(testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("cleans up previous test data", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptionsByCustomData(this.testCustomData);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
         });
 
         // it('cleans up previous hash test data', function(done) {
@@ -571,513 +486,364 @@ describe("Enzoic", function () {
         //     );
         // });
 
-        it("cleans up previous alt test data", function (done) {
-            enzoic.deleteUserAlertSubscriptionsByCustomData(testCustomData2,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("cleans up previous alt test data", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptionsByCustomData(this.testCustomData2);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
         });
 
-        it("gets correct result", function (done) {
-            enzoic.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 2,
-                        alreadyExisted: 0
-                    });
-                    done();
-                }
-            );
+        it("gets correct result", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUsers, this.testCustomData);
+            expect(result).to.deep.equal({
+                added: 2,
+                alreadyExisted: 0
+            });
         });
 
-        it("gets correct repeated result", function (done) {
-            enzoic.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 0,
-                        alreadyExisted: 2
-                    });
-                    done();
-                }
-            );
+        it("gets correct repeated result", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUsers, this.testCustomData);
+            expect(result).to.deep.equal({
+                added: 0,
+                alreadyExisted: 2
+            });
         });
 
-        it("allows same hashes with different custom data", function (done) {
-            enzoic.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData2,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 2,
-                        alreadyExisted: 0
-                    });
-                    done();
-                }
-            );
+        it("allows same hashes with different custom data", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUsers, this.testCustomData2);
+            expect(result).to.deep.equal({
+                added: 2,
+                alreadyExisted: 0
+            });
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+            try {
+                const result = await bogusServer.addUserAlertSubscriptions(this.testUsers, this.testCustomData);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#deleteUserAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
+    describe("#deleteUserAlertSubscriptions()", () => {
+        beforeEach(async () => {
+            this.testUsers = [
+                "eicar_0@enzoic.com",
+                "eicar_1@enzoic.com"
+            ];
+            await this.enzoic.deleteUserAlertSubscriptions(this.testUsers);
 
-        var testUserHashes = [
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351e",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351f"
-        ];
-
-        it("adds test data", function (done) {
-            enzoic.addUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+            // add test data
+            const addResult = await this.enzoic.addUserAlertSubscriptions(this.testUsers);
+            expect(addResult.added).to.equal(2);
+            expect(addResult.alreadyExisted).to.equal(0);
         });
 
-        it("gets correct result", function (done) {
-            enzoic.deleteUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 2,
-                        notFound: 0
-                    });
-                    done();
-                }
-            );
+        it("gets correct result", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptions(this.testUsers);
+            expect(result).to.deep.equal({
+                deleted: 2,
+                notFound: 0
+            });
         });
 
-        it("gets correct repeated result", function (done) {
-            enzoic.deleteUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 0,
-                        notFound: 2
-                    });
-                    done();
-                }
-            );
+        it("gets correct result when nothing to delete", async () => {
+            // delete test data
+            await this.enzoic.deleteUserAlertSubscriptions(this.testUsers);
+
+            const result = await this.enzoic.deleteUserAlertSubscriptions(this.testUsers);
+            expect(result).to.deep.equal({
+                deleted: 0,
+                notFound: 2
+            });
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.deleteUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+            try {
+                const result = await bogusServer.deleteUserAlertSubscriptions(this.testUsers);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#deleteUserAlertSubscriptionsByCustomData()", function () {
-        var enzoic = getEnzoic();
-
-        var testUserHashes = [
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351e",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44351f"
-        ];
-        var testCustomData = "123456";
-
-        it("cleans up previous test data", function (done) {
-            enzoic.deleteUserAlertSubscriptionsByCustomData(testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+    describe("#deleteUserAlertSubscriptionsByCustomData()", () => {
+        beforeEach(() => {
+            this.testUsers = [
+                "eicar_0@enzoic.com",
+                "eicar_1@enzoic.com"
+            ];
+            this.testCustomData = "123456";
         });
 
-        it("adds test data", function (done) {
-            enzoic.addUserAlertSubscriptionsWithCustomData(testUserHashes, testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("cleans up previous test data", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptionsByCustomData(this.testCustomData);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
         });
 
-        it("gets correct result", function (done) {
-            enzoic.deleteUserAlertSubscriptionsByCustomData(testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 2,
-                        notFound: 0
-                    });
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUsers, this.testCustomData);
+            expect(result.added).to.greaterThan(-1);
+            expect(result.alreadyExisted).to.greaterThan(-1);
         });
 
-        it("gets correct repeated result", function (done) {
-            enzoic.deleteUserAlertSubscriptionsByCustomData(testCustomData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 0,
-                        notFound: 1
-                    });
-                    done();
-                }
-            );
+        it("gets correct result", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptionsByCustomData(this.testCustomData);
+            expect(result).to.deep.equal({
+                deleted: 2,
+                notFound: 0
+            });
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("gets correct repeated result", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptionsByCustomData(this.testCustomData);
+            expect(result).to.deep.equal({
+                deleted: 0,
+                notFound: 1
+            });
+        });
 
-            bogusServer.deleteUserAlertSubscriptionsByCustomData(testCustomData,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            try {
+                const result = await bogusServer.deleteUserAlertSubscriptionsByCustomData(this.testCustomData);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#isUserSubscribedForAlerts()", function () {
-        var enzoic = getEnzoic();
-
-        var testUserHash = "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44352e";
-
-        it("adds test data", function (done) {
-            enzoic.addUserAlertSubscriptions(testUserHash,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+    describe("#isUserSubscribedForAlerts()", () => {
+        beforeEach(() => {
+            this.testUser = "eicar_0@enzoic.com";
         });
 
-        it("gets correct result when exists", function (done) {
-            enzoic.isUserSubscribedForAlerts(testUserHash,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.equal(true);
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUser);
+            expect(result.added).to.greaterThan(-1);
+            expect(result.alreadyExisted).to.greaterThan(-1);
         });
 
-        it("delete test data", function (done) {
-            enzoic.deleteUserAlertSubscriptions(testUserHash,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("gets correct result when exists", async () => {
+            const result = await this.enzoic.isUserSubscribedForAlerts(this.testUser);
+            expect(result).to.equal(true);
         });
 
-        it("gets correct result when not exists", function (done) {
-            enzoic.isUserSubscribedForAlerts(testUserHash,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.equal(false);
-                    done();
-                }
-            );
+        it("delete test data", async () => {
+            const result = await this.enzoic.deleteUserAlertSubscriptions(this.testUser);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("gets correct result when not exists", async () => {
+            const result = await this.enzoic.isUserSubscribedForAlerts(this.testUser);
+            expect(result).to.equal(false);
+        });
 
-            bogusServer.isUserSubscribedForAlerts(testUserHash,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            try {
+                const result = await bogusServer.isUserSubscribedForAlerts(this.testUser);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#getUserAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var testUserHashes = [
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443530",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443531",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443532",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443533",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443534",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443535",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443536",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c443537",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44353a",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44353b",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44353c",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44353d",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44353e",
-            "d56cdba2a920248f6487eb5a951013fcb9e4752a2ba5f1fa61ef8d235c44353f"
-        ];
-
-        it("adds test data", function (done) {
-            enzoic.addUserAlertSubscriptions(testUserHashes,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+    describe("#getUserAlertSubscriptions()", () => {
+        beforeEach(() => {
+            this.testUserHashes = [
+                "eicar_0@enzoic.com",
+                "eicar_1@enzoic.com",
+                "eicar_2@enzoic.com",
+                "eicar_3@enzoic.com",
+                "eicar_4@enzoic.com",
+                "eicar_5@enzoic.com",
+                "eicar_6@enzoic.com",
+                "eicar_7@enzoic.com",
+                "eicar_8@enzoic.com",
+                "eicar_9@enzoic.com",
+                "eicar_10@enzoic.com",
+                "eicar_11@enzoic.com",
+                "eicar_12@enzoic.com",
+                "eicar_13@enzoic.com",
+            ];
         });
 
-        var response1;
-
-        it("gets correct result", function (done) {
-            enzoic.getUserAlertSubscriptions(4, null,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.count).to.greaterThan(13);
-                    expect(result.usernameHashes.length).to.equal(4);
-                    expect(result.pagingToken).to.not.equal(null);
-
-                    // save off result for next call
-                    response1 = result;
-
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            const result = await this.enzoic.addUserAlertSubscriptions(this.testUserHashes);
+            expect(result.added).to.greaterThan(-1);
+            expect(result.alreadyExisted).to.greaterThan(-1);
         });
 
-        it("gets correct result for next page", function (done) {
-            enzoic.getUserAlertSubscriptions(4, response1.pagingToken,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.count).to.greaterThan(13);
-                    expect(result.usernameHashes.length).to.equal(4);
-                    expect(result.pagingToken).to.not.equal(null);
-                    done();
-                }
-            );
+        let response1;
+
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getUserAlertSubscriptions(4, null);
+            expect(result.count).to.greaterThan(13);
+            expect(result.usernameHashes.length).to.equal(4);
+            expect(result.pagingToken).to.not.equal(null);
+
+            // save off result for next call
+            response1 = result;
+
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("gets correct result for next page", async () => {
+            const result = await this.enzoic.getUserAlertSubscriptions(4, response1.pagingToken);
+            expect(result.count).to.greaterThan(13);
+            expect(result.usernameHashes.length).to.equal(4);
+            expect(result.pagingToken).to.not.equal(null);
+        });
 
-            bogusServer.getUserAlertSubscriptions(4, null,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            try {
+                const result = await bogusServer.getUserAlertSubscriptions(4, null);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#addDomainAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var testDomains = [
-            "testadddomain1.com",
-            "testadddomain2.com"
-        ];
-
-        it("cleans up previous test data", function (done) {
-            enzoic.deleteDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+    describe("#addDomainAlertSubscriptions()", () => {
+        beforeEach(() => {
+            this.testDomains = [
+                "testadddomain1.com",
+                "testadddomain2.com"
+            ];
         });
 
-        it("gets correct result", function (done) {
-            enzoic.addDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 2,
-                        alreadyExisted: 0
-                    });
-                    done();
-                }
-            );
+        it("cleans up previous test data", async () => {
+            const result = await this.enzoic.deleteDomainAlertSubscriptions(this.testDomains);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
         });
 
-        it("gets correct repeated result", function (done) {
-            enzoic.addDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        added: 0,
-                        alreadyExisted: 2
-                    });
-                    done();
-                }
-            );
+        it("gets correct result", async () => {
+            const result = await this.enzoic.addDomainAlertSubscriptions(this.testDomains);
+            expect(result).to.deep.equal({
+                added: 2,
+                alreadyExisted: 0
+            });
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("gets correct repeated result", async () => {
+            const result = await this.enzoic.addDomainAlertSubscriptions(this.testDomains);
+            expect(result).to.deep.equal({
+                added: 0,
+                alreadyExisted: 2
+            });
+        });
 
-            bogusServer.addDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            try {
+                const result = await bogusServer.addDomainAlertSubscriptions(this.testDomains);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#deleteDomainAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var testDomains = [
-            "testdeletedomain1.com",
-            "testdeletedomain2.com"
-        ];
-
-        it("adds test data", function (done) {
-            enzoic.addDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+    describe("#deleteDomainAlertSubscriptions()", () => {
+        beforeEach(() => {
+            this.testDomains = [
+                "testdeletedomain1.com",
+                "testdeletedomain2.com"
+            ];
         });
 
-        it("gets correct result", function (done) {
-            enzoic.deleteDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 2,
-                        notFound: 0
-                    });
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            const result = await this.enzoic.addDomainAlertSubscriptions(this.testDomains);
+            expect(result.added).to.greaterThan(-1);
+            expect(result.alreadyExisted).to.greaterThan(-1);
         });
 
-        it("gets correct repeated result", function (done) {
-            enzoic.deleteDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 0,
-                        notFound: 2
-                    });
-                    done();
-                }
-            );
+        it("gets correct result", async () => {
+            const result = await this.enzoic.deleteDomainAlertSubscriptions(this.testDomains);
+            expect(result).to.deep.equal({
+                deleted: 2,
+                notFound: 0
+            });
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("gets correct repeated result", async () => {
+            const result = await this.enzoic.deleteDomainAlertSubscriptions(this.testDomains);
+            expect(result).to.deep.equal({
+                deleted: 0,
+                notFound: 2
+            });
+        });
 
-            bogusServer.deleteDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            try {
+                const result = await bogusServer.deleteDomainAlertSubscriptions(this.testDomains);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#isDomainSubscribedForAlerts()", function () {
-        this.timeout(10000);
-
-        var enzoic = getEnzoic();
-
-        var testDomain = "testtestdomain1.com";
-
-        it("adds test data", function (done) {
-            enzoic.addDomainAlertSubscriptions(testDomain,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+    describe("#isDomainSubscribedForAlerts()", () => {
+        beforeEach(() => {
+            this.testDomain = "testtestdomain1.com";
         });
 
-        it("gets correct result when exists", function (done) {
-            enzoic.isDomainSubscribedForAlerts(testDomain,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.equal(true);
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            const result = await this.enzoic.addDomainAlertSubscriptions(this.testDomain);
+            expect(result.added).to.greaterThan(-1);
+            expect(result.alreadyExisted).to.greaterThan(-1);
         });
 
-        it("delete test data", function (done) {
-            enzoic.deleteDomainAlertSubscriptions(testDomain,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.deleted).to.greaterThan(-1);
-                    expect(result.notFound).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("gets correct result when exists", async () => {
+            const result = await this.enzoic.isDomainSubscribedForAlerts(this.testDomain);
+            expect(result).to.equal(true);
         });
 
-        it("gets correct result when not exists", function (done) {
-            enzoic.isDomainSubscribedForAlerts(testDomain,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.equal(false);
-                    done();
-                }
-            );
+        it("delete test data", async () => {
+            const result = await this.enzoic.deleteDomainAlertSubscriptions(this.testDomain);
+            expect(result.deleted).to.greaterThan(-1);
+            expect(result.notFound).to.greaterThan(-1);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("gets correct result when not exists", async () => {
+            const result = await this.enzoic.isDomainSubscribedForAlerts(this.testDomain);
+            expect(result).to.equal(false);
+        });
 
-            bogusServer.isDomainSubscribedForAlerts(testDomain,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+
+            try {
+                const result = await bogusServer.isDomainSubscribedForAlerts(this.testDomain);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#getDomainAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var testDomains = [
+    describe("#getDomainAlertSubscriptions()", () => {
+        const testDomains = [
             "testgetdomain1.com",
             "testgetdomain2.com",
             "testgetdomain3.com",
@@ -1094,934 +860,578 @@ describe("Enzoic", function () {
             "testgetdomain14.com"
         ];
 
-        it("adds test data", function (done) {
-            enzoic.addDomainAlertSubscriptions(testDomains,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.added).to.greaterThan(-1);
-                    expect(result.alreadyExisted).to.greaterThan(-1);
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            const result = await this.enzoic.addDomainAlertSubscriptions(testDomains);
+            expect(result.added).to.greaterThan(-1);
+            expect(result.alreadyExisted).to.greaterThan(-1);
         });
 
-        var response1;
+        let response1;
 
-        it("gets correct result", function (done) {
-            enzoic.getDomainAlertSubscriptions(4, null,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.count).to.greaterThan(13);
-                    expect(result.domains.length).to.equal(4);
-                    expect(result.pagingToken).to.not.equal(null);
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getDomainAlertSubscriptions(4, null);
+            expect(result.count).to.greaterThan(13);
+            expect(result.domains.length).to.equal(4);
+            expect(result.pagingToken).to.not.equal(null);
 
-                    // save off result for next call
-                    response1 = result;
+            // save off result for next call
+            response1 = result;
 
-                    done();
-                }
-            );
         });
 
-        it("gets correct result for next page", function (done) {
-            enzoic.getDomainAlertSubscriptions(4, response1.pagingToken,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.count).to.greaterThan(13);
-                    expect(result.domains.length).to.equal(4);
-                    expect(result.pagingToken).to.not.equal(null);
-                    done();
-                }
-            );
+        it("gets correct result for next page", async () => {
+            const result = await this.enzoic.getDomainAlertSubscriptions(4, response1.pagingToken);
+            expect(result.count).to.greaterThan(13);
+            expect(result.domains.length).to.equal(4);
+            expect(result.pagingToken).to.not.equal(null);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getDomainAlertSubscriptions(4, null,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
-        });
-    });
-
-    describe("#getExposedUsersForDomain()", function (done) {
-        var enzoic = getEnzoic();
-        var pagingToken = null;
-
-        it("gets correct result", function (done) {
-            enzoic.getExposedUsersForDomain("email.tst", 2, null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(12);
-                expect(result.users.length).to.equal(2);
-                expect(result.users).to.deep.equal([
-                    {
-                        "username": "sample@email.tst",
-                        "exposures": [
-                            "57dc11964d6db21300991b78",
-                            "5805029914f33808dc802ff7",
-                            "57ffcf3c1395c80b30dd4429",
-                            "598e5b844eb6d82ea07c5783",
-                            "59bbf691e5017d2dc8a96eab",
-                            "59bc2016e5017d2dc8bdc36a",
-                            "59bebae9e5017d2dc85fc2ab",
-                            "59f36f8c4eb6d85ba0bee09c",
-                            "5bcf9af3e5017d07201e2149",
-                            "5c4f818bd3cef70e983dda1e"
-                        ]
-                    },
-                    {
-                        "username": "xxxxxxxxxx@email.tst",
-                        "exposures": [
-                            "5805029914f33808dc802ff7"
-                        ]
-                    }
-                ]);
-                expect(result.pagingToken).to.not.equal(null);
-                pagingToken = result.pagingToken;
-                done();
-            });
-        });
-
-        it("gets correct result for subsequent page", function (done) {
-            expect(pagingToken).to.not.equal(null);
-
-            enzoic.getExposedUsersForDomain("email.tst", 2, pagingToken, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(12);
-                expect(result.users.length).to.equal(2);
-                expect(result.users).to.deep.equal([
-                    {
-                        "username": "cbeiqvf@email.tst",
-                        "exposures": [
-                            "5805029914f33808dc802ff7"
-                        ]
-                    },
-                    {
-                        "username": "yjybey@email.tst",
-                        "exposures": [
-                            "5805029914f33808dc802ff7"
-                        ]
-                    }
-                ]);
-                done();
-            });
-        });
-
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposedUsersForDomain("@@bogus-domain@@", 2, null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(0);
-                expect(result.users.length).to.equal(0);
-                done();
-            });
-        });
-
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
-
-            bogusServer.getExposedUsersForDomain("email.tst", 2, null, function (err, result) {
+            try {
+                const result = await bogusServer.getDomainAlertSubscriptions(4, null);
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getExposuresForDomain()", function (done) {
-        var enzoic = getEnzoic();
+    describe("#getUserPasswords()", async () => {
+        const enzoic = getEnzoic();
 
-        it("gets correct result for no details", function (done) {
-            enzoic.getExposuresForDomain("email.tst", false, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(10);
-                expect(result.exposures.length).to.equal(10);
-                expect(result.exposures.sort()).to.deep.equal([
-                    "57ffcf3c1395c80b30dd4429",
-                    "57dc11964d6db21300991b78",
-                    "5805029914f33808dc802ff7",
-                    "598e5b844eb6d82ea07c5783",
-                    "59bbf691e5017d2dc8a96eab",
-                    "59bc2016e5017d2dc8bdc36a",
-                    "59bebae9e5017d2dc85fc2ab",
-                    "59f36f8c4eb6d85ba0bee09c",
-                    "5bcf9af3e5017d07201e2149",
-                    "5c4f818bd3cef70e983dda1e"
-                ].sort());
-                done();
-            });
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getUserPasswords("eicar_0@enzoic.com");
+            expect(result.passwords.length).to.equal(4);
+            expect(result.lastBreachDate).to.equal("2022-10-14T07:02:40.000Z");
+            expect(result.passwords).to.deep.equal([
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "password123",
+                    "exposures": [
+                        "634908d2e0513eb0788aa0b9",
+                        "634908d06715cc1b5b201a1a"
+                    ]
+                },
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "g0oD_on3",
+                    "exposures": [
+                        "634908d2e0513eb0788aa0b9"
+                    ]
+                },
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "Easy2no",
+                    "exposures": [
+                        "634908d26715cc1b5b201a1d"
+                    ]
+                },
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "123456",
+                    "exposures": [
+                        "63490990e0513eb0788aa0d1",
+                        "634908d0e0513eb0788aa0b5"
+                    ]
+                }
+            ]);
         });
 
-        it("gets correct result for include details", function (done) {
-            enzoic.getExposuresForDomain("email.tst", true, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(10);
-                expect(result.exposures.length).to.equal(10);
-                expect(result.exposures[0]).to.deep.equal(
-                    {
-                        "id": "57dc11964d6db21300991b78",
-                        "title": "funsurveys.net",
-                        "entries": 5123,
-                        "date": "2015-05-01T00:00:00.000Z",
-                        "category": "Marketing",
-                        "passwordType": "Cleartext",
-                        "exposedData": [
-                            "Emails",
-                            "Passwords"
-                        ],
-                        "dateAdded": "2016-09-16T15:36:54.000Z",
-                        "sourceURLs": [],
-                        "domainsAffected": 683,
-                        "source": "Unspecified",
-                        "sourceFileCount": 1
-                    }
-                );
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getUserPasswords("@@bogus-user@@");
+            expect(result).to.equal(false);
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getExposuresForDomain("@@bogus-domain@@", false, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.count).to.equal(0);
-                expect(result.exposures.length).to.equal(0);
-                done();
-            });
-        });
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
-
-            bogusServer.getExposuresForDomain("email.tst", false, function (err, result) {
+            try {
+                const result = await bogusServer.getUserPasswords("eicar_0@enzoic.com");
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getUserPasswords()", function (done) {
-        var enzoic = getEnzoic();
+    describe("#getUserPasswordsEx()", async () => {
+        const enzoic = getEnzoic();
+        const pagingToken = null;
 
-        it("gets correct result", function (done) {
-            enzoic.getUserPasswords("eicar_0@enzoic.com", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.passwords.length).to.equal(4);
-                expect(result.lastBreachDate).to.equal("2022-10-14T07:02:40.000Z");
-                expect(result.passwords).to.deep.equal([
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "password123",
-                        "exposures": [
-                            "634908d2e0513eb0788aa0b9",
-                            "634908d06715cc1b5b201a1a"
-                        ]
-                    },
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "g0oD_on3",
-                        "exposures": [
-                            "634908d2e0513eb0788aa0b9"
-                        ]
-                    },
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "Easy2no",
-                        "exposures": [
-                            "634908d26715cc1b5b201a1d"
-                        ]
-                    },
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "123456",
-                        "exposures": [
-                            "63490990e0513eb0788aa0d1",
-                            "634908d0e0513eb0788aa0b5"
-                        ]
-                    }
-                ]);
-                done();
-            });
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getUserPasswordsEx("eicar_0@enzoic.com", true);
+            expect(result.passwords.length).to.equal(4);
+            expect(result.lastBreachDate).to.equal("2022-10-14T07:02:40.000Z");
+            expect(result.passwords).to.deep.equal([
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "password123",
+                    "exposures": [
+                        {
+                            "category": "Testing Ignore",
+                            "date": null,
+                            "dateAdded": "2022-10-14T06:59:28.000Z",
+                            "domainsAffected": 1,
+                            "entries": 5,
+                            "exposedData": [
+                                "Emails",
+                                "Passwords"
+                            ],
+                            "id": "634908d06715cc1b5b201a1a",
+                            "passwordType": "MD5",
+                            "source": "Testing - Ignore",
+                            "sourceFileCount": 1,
+                            "sourceURLs": [],
+                            "title": "enzoic test breach 1",
+                        },
+                        {
+                            "category": "Testing Ignore",
+                            "date": null,
+                            "dateAdded": "2022-10-14T06:59:30.000Z",
+                            "domainsAffected": 1,
+                            "entries": 2,
+                            "exposedData": [
+                                "Emails",
+                                "Passwords"
+                            ],
+                            "id": "634908d2e0513eb0788aa0b9",
+                            "passwordType": "Cleartext",
+                            "source": "Testing - Ignore",
+                            "sourceFileCount": 1,
+                            "sourceURLs": [],
+                            "title": "enzoic test breach 5"
+                        }]
+                },
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "g0oD_on3",
+                    "exposures": [
+                        {
+                            "category": "Testing Ignore",
+                            "date": null,
+                            "dateAdded": "2022-10-14T06:59:30.000Z",
+                            "domainsAffected": 1,
+                            "entries": 2,
+                            "exposedData": [
+                                "Emails",
+                                "Passwords"
+                            ],
+                            "id": "634908d2e0513eb0788aa0b9",
+                            "passwordType": "Cleartext",
+                            "source": "Testing - Ignore",
+                            "sourceFileCount": 1,
+                            "sourceURLs": [],
+                            "title": "enzoic test breach 5"
+                        }
+                    ]
+                },
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "Easy2no",
+                    "exposures": [
+                        {
+                            "category": "Testing Ignore",
+                            "date": null,
+                            "dateAdded": "2022-10-14T06:59:30.000Z",
+                            "domainsAffected": 1,
+                            "entries": 4,
+                            "exposedData": [
+                                "Emails",
+                                "Passwords"
+                            ],
+                            "id": "634908d26715cc1b5b201a1d",
+                            "passwordType": "MD5",
+                            "source": "Testing - Ignore",
+                            "sourceFileCount": 1,
+                            "sourceURLs": [],
+                            "title": "enzoic test breach 4"
+                        }
+                    ]
+                },
+                {
+                    "hashType": 0,
+                    "salt": "",
+                    "password": "123456",
+                    "exposures": [
+                        {
+                            "category": "Testing Ignore",
+                            "date": null,
+                            "dateAdded": "2022-10-14T06:59:28.000Z",
+                            "domainsAffected": 1,
+                            "entries": 5,
+                            "exposedData": [
+                                "Emails",
+                                "Passwords"
+                            ],
+                            "id": "634908d0e0513eb0788aa0b5",
+                            "passwordType": "MD5",
+                            "source": "Testing - Ignore",
+                            "sourceFileCount": 1,
+                            "sourceURLs": [],
+                            "title": "enzoic test breach 2"
+                        },
+                        {
+                            "category": "Testing Ignore",
+                            "date": null,
+                            "dateAdded": "2022-10-14T07:02:40.000Z",
+                            "domainsAffected": 1,
+                            "entries": 3,
+                            "exposedData": [
+                                "Emails",
+                                "Passwords"
+                            ],
+                            "id": "63490990e0513eb0788aa0d1",
+                            "passwordType": "Cleartext",
+                            "source": "Testing - Ignore",
+                            "sourceFileCount": 1,
+                            "sourceURLs": [],
+                            "title": "enzoic test breach 3",
+                        }]
+                }
+            ]);
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getUserPasswords("@@bogus-user@@", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
-            });
+        it("handles negative result correctly", async () => {
+            const result = await this.enzoic.getUserPasswordsEx("@@bogus-user@@", true);
+            expect(result).to.equal(false);
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
 
-            bogusServer.getUserPasswords("eicar_0@enzoic.com", function (err, result) {
+            try {
+                const result = await bogusServer.getUserPasswordsEx("eicar_0@enzoic.com", true);
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#getUserPasswordsEx()", function (done) {
-        var enzoic = getEnzoic();
-        var pagingToken = null;
-
-        it("gets correct result", function (done) {
-            enzoic.getUserPasswordsEx("eicar_0@enzoic.com", true, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result.passwords.length).to.equal(4);
-                expect(result.lastBreachDate).to.equal("2022-10-14T07:02:40.000Z");
-                expect(result.passwords).to.deep.equal([
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "password123",
-                        "exposures": [
-                            {
-                                "category": "Testing Ignore",
-                                "date": null,
-                                "dateAdded": "2022-10-14T06:59:28.000Z",
-                                "domainsAffected": 1,
-                                "entries": 5,
-                                "exposedData": [
-                                    "Emails",
-                                    "Passwords"
-                                ],
-                                "id": "634908d06715cc1b5b201a1a",
-                                "passwordType": "MD5",
-                                "source": "Testing - Ignore",
-                                "sourceFileCount": 1,
-                                "sourceURLs": [],
-                                "title": "enzoic test breach 1",
-                            },
-                            {
-                                "category": "Testing Ignore",
-                                "date": null,
-                                "dateAdded": "2022-10-14T06:59:30.000Z",
-                                "domainsAffected": 1,
-                                "entries": 2,
-                                "exposedData": [
-                                    "Emails",
-                                    "Passwords"
-                                ],
-                                "id": "634908d2e0513eb0788aa0b9",
-                                "passwordType": "Cleartext",
-                                "source": "Testing - Ignore",
-                                "sourceFileCount": 1,
-                                "sourceURLs": [],
-                                "title": "enzoic test breach 5"
-                            }                        ]
-                    },
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "g0oD_on3",
-                        "exposures": [
-                            {
-                                "category": "Testing Ignore",
-                                "date": null,
-                                "dateAdded": "2022-10-14T06:59:30.000Z",
-                                "domainsAffected": 1,
-                                "entries": 2,
-                                "exposedData": [
-                                    "Emails",
-                                    "Passwords"
-                                ],
-                                "id": "634908d2e0513eb0788aa0b9",
-                                "passwordType": "Cleartext",
-                                "source": "Testing - Ignore",
-                                "sourceFileCount": 1,
-                                "sourceURLs": [],
-                                "title": "enzoic test breach 5"
-                            }
-                        ]
-                    },
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "Easy2no",
-                        "exposures": [
-                            {
-                                "category": "Testing Ignore",
-                                "date": null,
-                                "dateAdded": "2022-10-14T06:59:30.000Z",
-                                "domainsAffected": 1,
-                                "entries": 4,
-                                "exposedData": [
-                                    "Emails",
-                                    "Passwords"
-                                ],
-                                "id": "634908d26715cc1b5b201a1d",
-                                "passwordType": "MD5",
-                                "source": "Testing - Ignore",
-                                "sourceFileCount": 1,
-                                "sourceURLs": [],
-                                "title": "enzoic test breach 4"
-                            }
-                        ]
-                    },
-                    {
-                        "hashType": 0,
-                        "salt": "",
-                        "password": "123456",
-                        "exposures": [
-                            {
-                                "category": "Testing Ignore",
-                                "date": null,
-                                "dateAdded": "2022-10-14T06:59:28.000Z",
-                                "domainsAffected": 1,
-                                "entries": 5,
-                                "exposedData": [
-                                    "Emails",
-                                    "Passwords"
-                                ],
-                                "id": "634908d0e0513eb0788aa0b5",
-                                "passwordType": "MD5",
-                                "source": "Testing - Ignore",
-                                "sourceFileCount": 1,
-                                "sourceURLs": [],
-                                "title": "enzoic test breach 2"
-                            },
-                            {
-                                "category": "Testing Ignore",
-                                "date": null,
-                                "dateAdded": "2022-10-14T07:02:40.000Z",
-                                "domainsAffected": 1,
-                                "entries": 3,
-                                "exposedData": [
-                                    "Emails",
-                                    "Passwords"
-                                ],
-                                "id": "63490990e0513eb0788aa0d1",
-                                "passwordType": "Cleartext",
-                                "source": "Testing - Ignore",
-                                "sourceFileCount": 1,
-                                "sourceURLs": [],
-                                "title": "enzoic test breach 3",
-                            }                        ]
-                    }
-                ]);
-                done();
-            });
+    describe("#calcPasswordHash()", () => {
+        it("MD5 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.MD5, "123456", null);
+            expect(result).to.equal("e10adc3949ba59abbe56e057f20f883e");
         });
 
-        it("handles negative result correctly", function (done) {
-            enzoic.getUserPasswordsEx("@@bogus-user@@", true, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal(false);
-                done();
-            });
+        it("SHA1 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.SHA1, "123456", null);
+            expect(result).to.equal("7c4a8d09ca3762af61e59520943dc26494f8941b");
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com");
+        it("SHA256 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.SHA256, "123456", null);
+            expect(result).to.equal("8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92");
+        });
 
-            bogusServer.getUserPasswordsEx("eicar_0@enzoic.com", true, function (err, result) {
+        it("IPBoard_MyBB works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.IPBoard_MyBB, "123456", ";;!_X");
+            expect(result).to.equal("2e705e174e9df3e2c8aaa30297aa6d74");
+        });
+
+        it("VBulletin works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.VBulletinPost3_8_5, "123456789", "]G@");
+            expect(result).to.equal("57ce303cdf1ad28944d43454cea38d7a");
+        });
+
+        it("BCrypt works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.BCrypt, "12345", "$2a$12$2bULeXwv2H34SXkT1giCZe");
+            expect(result).to.equal("$2a$12$2bULeXwv2H34SXkT1giCZeJW7A6Q0Yfas09wOCxoIC44fDTYq44Mm");
+        });
+
+        it("CRC32 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CRC32, "123456", null);
+            expect(result).to.equal("0972d361");
+        });
+
+        it("PHPBB3 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.PHPBB3, "123456789", "$H$993WP3hbz");
+            expect(result).to.equal("$H$993WP3hbzy0N22X06wxrCc3800D2p41");
+        });
+
+        it("CustomAlgorithm1 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm1, "123456", "00new00");
+            expect(result).to.equal("cee66db36504915f48b2d545803a4494bb1b76b6e9d8ba8c0e6083ff9b281abdef31f6172548fdcde4000e903c5a98a1178c414f7dbf44cffc001aee8e1fe206");
+        });
+
+        it("CustomAlgorithm2 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm2, "123456", "123");
+            expect(result).to.equal("579d9ec9d0c3d687aaa91289ac2854e4");
+        });
+
+        it("SHA512 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.SHA512, "test", null);
+            expect(result).to.equal("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
+        });
+
+        it("MD5Crypt works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.MD5Crypt, "123456", "$1$4d3c09ea");
+            expect(result).to.equal("$1$4d3c09ea$hPwyka2ToWFbLTOq.yFjf.");
+        });
+
+        it("CustomAlgorithm4 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm4, "1234", "$2y$12$Yjk3YjIzYWIxNDg0YWMzZO");
+            expect(result).to.equal("$2y$12$Yjk3YjIzYWIxNDg0YWMzZOpp/eAMuWCD3UwX1oYgRlC1ci4Al970W");
+        });
+
+        it("CustomAlgorithm5 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm5, "password", "123456");
+            expect(result).to.equal("69e7ade919a318d8ecf6fd540bad9f169bce40df4cae4ac1fb6be2c48c514163");
+        });
+
+        it("DESCrypt works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.DESCrypt, "password", "X.");
+            expect(result).to.equal("X.OPW8uuoq5N.");
+        });
+
+        it("MySQLPre4_1 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.MySQLPre4_1, "password", null);
+            expect(result).to.equal("5d2e19393cc5ef67");
+        });
+
+        it("MySQLPost4_1 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.MySQLPost4_1, "test", null);
+            expect(result).to.equal("*94bdcebe19083ce2a1f959fd02f964c7af4cfc29");
+        });
+
+        it("PeopleSoft works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.PeopleSoft, "TESTING", null);
+            expect(result).to.equal("3weP/BR8RHPLP2459h003IgJxyU=");
+        });
+
+        it("PunBB works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.PunBB, "password", "123");
+            expect(result).to.equal("0c9a0dc3dd0b067c016209fd46749c281879069e");
+        });
+
+        it("CustomAlgorithm6 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm6, "password", "123");
+            expect(result).to.equal("cbfdac6008f9cab4083784cbd1874f76618d2a97");
+        });
+
+        it("PartialMD5_20 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.PartialMD5_20, "password", null);
+            expect(result).to.equal("5f4dcc3b5aa765d61d83");
+        });
+
+        it("AVE_DataLife_Diferior works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.AVE_DataLife_Diferior, "password", null);
+            expect(result).to.equal("696d29e0940a4957748fe3fc9efd22a3");
+        });
+
+        it("DjangoMD5 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.DjangoMD5, "password", "c6218");
+            expect(result).to.equal("md5$c6218$346abd81f2d88b4517446316222f4276");
+        });
+
+        it("DjangoSHA1 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.DjangoSHA1, "password", "c6218");
+            expect(result).to.equal("sha1$c6218$161d1ac8ab38979c5a31cbaba4a67378e7e60845");
+        });
+
+        it("PartialMD5_29 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.PartialMD5_29, "password", null);
+            expect(result).to.equal("5f4dcc3b5aa765d61d8327deb882c");
+        });
+
+        it("PliggCMS works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.PliggCMS, "password", "123");
+            expect(result).to.equal("1230de084f38ace8e3d82597f55cc6ad5d6001568e6");
+        });
+
+        it("RunCMS_SMF1_1 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.RunCMS_SMF1_1, "password", "123");
+            expect(result).to.equal("0de084f38ace8e3d82597f55cc6ad5d6001568e6");
+        });
+
+        it("NTLM works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.NTLM, "123456", null);
+            expect(result).to.equal("32ed87bdb5fdc5e9cba88547376818d4");
+        });
+
+        it("SHA1Dash works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.SHA1Dash, "123456", "478c8029d5efddc554bf2fe6bb2219d8c897d4a0");
+            expect(result).to.equal("55566a759b86fbbd979b579b232f4dd214d08068");
+        });
+
+        it("SHA384 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.SHA384, "123456", null);
+            expect(result).to.equal("0a989ebc4a77b56a6e2bb7b19d995d185ce44090c13e2984b7ecc6d446d4b61ea9991b76a4c2f04b1b4d244841449454");
+        });
+
+        it("CustomAlgorithm7 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm7, "123456", "123456");
+            expect(result).to.equal("a753d386613efd6d4a534cec97e73890f8ec960fe6634db6dbfb9b2aab207982");
+        });
+
+        it("CustomAlgorithm8 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm8, "matthew", "Dn");
+            expect(result).to.equal("9fc389447b7eb88aff45a1069bf89fbeff89b8fb7d11a6f450583fa4c9c70503");
+        });
+
+        it("CustomAlgorithm9 works", async () => {
+            const result = await this.enzoic.calcPasswordHash(PasswordType.CustomAlgorithm9, "0rangepeel", "6kpcxVSjagLgsNCUCr-D");
+            expect(result).to.equal("07c691fa8b022b52ac1c44cab3e056b344a7945b6eb9db727e3842b28d94fe18c17fe5b47b1b9a29d8149acbd7b3f73866cc12f0a8a8b7ab4ac9470885e052dc");
+        });
+    });
+
+    describe("#addCredentialsAlertSubscription()", async () => {
+        beforeEach(async () => {
+            this.username = "UNIT_TEST_addCredentialsAlertSubscription@passwordping.com";
+            this.password = "unittesttest";
+            this.customData = "UNIT_TEST_addCredentialsAlertSubscription";
+
+            await this.enzoic.deleteCredentialsAlertSubscriptionByCustomData(this.customData);
+        });
+
+        it("cleans up previous test data", async () => {
+            const result = await this.enzoic.deleteCredentialsAlertSubscriptionByCustomData(this.customData);
+        });
+
+        it("gets correct result", async () => {
+            const result = await this.enzoic.addCredentialsAlertSubscription(this.username, this.password, this.customData);
+            expect(typeof (result.monitoredCredentialsID)).to.equal("string");
+            expect(result.monitoredCredentialsID.length).to.equal(24);
+        });
+
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
+
+            try {
+                const result = await bogusServer.addCredentialsAlertSubscription(this.username, this.password, this.customData);
+            }
+            catch (err) {
                 expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                done();
-            });
+            }
         });
     });
 
-    describe("#calcPasswordHash()", function () {
-        var enzoic = getEnzoic();
+    describe("#deleteCredentialsAlertSubscriptions()", async () => {
+        beforeEach(async () => {
+            this.username = "UNIT_TEST_deleteCredentialsAlertSubscriptions@passwordping.com";
+            this.password = "unittesttest";
+            this.customData = "UNIT_TEST_deleteCredentialsAlertSubscriptions";
+        });
 
-        it("MD5 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.MD5, "123456", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("e10adc3949ba59abbe56e057f20f883e");
-                done();
+        let newID;
+        it("adds test data", async () => {
+            await this.enzoic.deleteCredentialsAlertSubscriptionByCustomData(this.customData);
+
+            const result = await this.enzoic.addCredentialsAlertSubscription(this.username, this.password, this.customData);
+            expect(typeof (result.monitoredCredentialsID)).to.equal("string");
+            expect(result.monitoredCredentialsID.length).to.equal(24);
+            newID = result.monitoredCredentialsID;
+        });
+
+        it("gets correct result", async () => {
+            const result = await this.enzoic.deleteCredentialsAlertSubscription(newID);
+            expect(result).to.deep.equal({
+                deleted: 1,
+                notFound: 0
             });
         });
 
-        it("SHA1 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.SHA1, "123456", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("7c4a8d09ca3762af61e59520943dc26494f8941b");
-                done();
+        it("gets correct repeated result", async () => {
+            const result = await this.enzoic.deleteCredentialsAlertSubscription(newID);
+            expect(result).to.deep.equal({
+                deleted: 0,
+                notFound: 1
             });
         });
 
-        it("SHA256 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.SHA256, "123456", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92");
-                done();
-            });
-        });
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
 
-        it("IPBoard_MyBB works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.IPBoard_MyBB, "123456", ";;!_X", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("2e705e174e9df3e2c8aaa30297aa6d74");
-                done();
-            });
-        });
-
-        it("VBulletin works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.VBulletinPost3_8_5, "123456789", "]G@", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("57ce303cdf1ad28944d43454cea38d7a");
-                done();
-            });
-        });
-
-        it("BCrypt works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.BCrypt, "12345", "$2a$12$2bULeXwv2H34SXkT1giCZe", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("$2a$12$2bULeXwv2H34SXkT1giCZeJW7A6Q0Yfas09wOCxoIC44fDTYq44Mm");
-                done();
-            });
-        });
-
-        it("CRC32 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.CRC32, "123456", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("0972d361");
-                done();
-            });
-        });
-
-        it("PHPBB3 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.PHPBB3, "123456789", "$H$993WP3hbz", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("$H$993WP3hbzy0N22X06wxrCc3800D2p41");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm1 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm1, "123456", "00new00", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("cee66db36504915f48b2d545803a4494bb1b76b6e9d8ba8c0e6083ff9b281abdef31f6172548fdcde4000e903c5a98a1178c414f7dbf44cffc001aee8e1fe206");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm2 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm2, "123456", "123", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("579d9ec9d0c3d687aaa91289ac2854e4");
-                done();
-            });
-        });
-
-        it("SHA512 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.SHA512, "test", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff");
-                done();
-            });
-        });
-
-        it("MD5Crypt works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.MD5Crypt, "123456", "$1$4d3c09ea", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("$1$4d3c09ea$hPwyka2ToWFbLTOq.yFjf.");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm4 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm4, "1234", "$2y$12$Yjk3YjIzYWIxNDg0YWMzZO", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("$2y$12$Yjk3YjIzYWIxNDg0YWMzZOpp/eAMuWCD3UwX1oYgRlC1ci4Al970W");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm5 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm5, "password", "123456", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("69e7ade919a318d8ecf6fd540bad9f169bce40df4cae4ac1fb6be2c48c514163");
-                done();
-            });
-        });
-
-        it("DESCrypt works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.DESCrypt, "password", "X.", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("X.OPW8uuoq5N.");
-                done();
-            });
-        });
-
-        it("MySQLPre4_1 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.MySQLPre4_1, "password", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("5d2e19393cc5ef67");
-                done();
-            });
-        });
-
-        it("MySQLPost4_1 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.MySQLPost4_1, "test", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("*94bdcebe19083ce2a1f959fd02f964c7af4cfc29");
-                done();
-            });
-        });
-
-        it("PeopleSoft works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.PeopleSoft, "TESTING", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("3weP/BR8RHPLP2459h003IgJxyU=");
-                done();
-            });
-        });
-
-        it("PunBB works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.PunBB, "password", "123", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("0c9a0dc3dd0b067c016209fd46749c281879069e");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm6 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm6, "password", "123", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("cbfdac6008f9cab4083784cbd1874f76618d2a97");
-                done();
-            });
-        });
-
-        it("PartialMD5_20 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.PartialMD5_20, "password", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("5f4dcc3b5aa765d61d83");
-                done();
-            });
-        });
-
-        it("AVE_DataLife_Diferior works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.AVE_DataLife_Diferior, "password", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("696d29e0940a4957748fe3fc9efd22a3");
-                done();
-            });
-        });
-
-        it("DjangoMD5 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.DjangoMD5, "password", "c6218", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("md5$c6218$346abd81f2d88b4517446316222f4276");
-                done();
-            });
-        });
-
-        it("DjangoSHA1 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.DjangoSHA1, "password", "c6218", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("sha1$c6218$161d1ac8ab38979c5a31cbaba4a67378e7e60845");
-                done();
-            });
-        });
-
-        it("PartialMD5_29 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.PartialMD5_29, "password", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("5f4dcc3b5aa765d61d8327deb882c");
-                done();
-            });
-        });
-
-        it("PliggCMS works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.PliggCMS, "password", "123", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("1230de084f38ace8e3d82597f55cc6ad5d6001568e6");
-                done();
-            });
-        });
-
-        it("RunCMS_SMF1_1 works", function (done) {
-            enzoic.calcPasswordHash(PasswordType.RunCMS_SMF1_1, "password", "123", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("0de084f38ace8e3d82597f55cc6ad5d6001568e6");
-                done();
-            });
-        });
-
-        it("NTLM works", function(done) {
-            enzoic.calcPasswordHash(PasswordType.NTLM, "123456", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("32ed87bdb5fdc5e9cba88547376818d4");
-                done();
-            });
-        });
-
-        it("SHA1Dash works", function(done) {
-            enzoic.calcPasswordHash(PasswordType.SHA1Dash, "123456", "478c8029d5efddc554bf2fe6bb2219d8c897d4a0", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("55566a759b86fbbd979b579b232f4dd214d08068");
-                done();
-            });
-        });
-
-        it("SHA384 works", function(done) {
-            enzoic.calcPasswordHash(PasswordType.SHA384, "123456", null, function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("0a989ebc4a77b56a6e2bb7b19d995d185ce44090c13e2984b7ecc6d446d4b61ea9991b76a4c2f04b1b4d244841449454");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm7 works", function(done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm7, "123456", "123456", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("a753d386613efd6d4a534cec97e73890f8ec960fe6634db6dbfb9b2aab207982");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm8 works", function(done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm8, "matthew", "Dn", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("9fc389447b7eb88aff45a1069bf89fbeff89b8fb7d11a6f450583fa4c9c70503");
-                done();
-            });
-        });
-
-        it("CustomAlgorithm9 works", function(done) {
-            enzoic.calcPasswordHash(PasswordType.CustomAlgorithm9, "0rangepeel", "6kpcxVSjagLgsNCUCr-D", function (err, result) {
-                expect(err).to.equal(null);
-                expect(result).to.equal("07c691fa8b022b52ac1c44cab3e056b344a7945b6eb9db727e3842b28d94fe18c17fe5b47b1b9a29d8149acbd7b3f73866cc12f0a8a8b7ab4ac9470885e052dc");
-                done();
-            });
+            try {
+                const result = await bogusServer.deleteCredentialsAlertSubscription(newID);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#addCredentialsAlertSubscription()", function () {
-        var enzoic = getEnzoic();
-
-        var username = "UNIT_TEST_addCredentialsAlertSubscription@passwordping.com";
-        var password = "unittesttest";
-        var customData = "UNIT_TEST_addCredentialsAlertSubscription";
-
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
+    describe("#getCredentialsAlertSubscriptions()", async () => {
+        beforeEach(async () => {
+            this.username = "UNIT_TEST_getCredentialsAlertSubscriptions@passwordping.com";
+            this.password = "unittesttest";
+            this.customData = "UNIT_TEST_getCredentialsAlertSubscriptions";
         });
 
-        it("cleans up previous test data", function (done) {
-            enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            await this.enzoic.deleteCredentialsAlertSubscriptionByCustomData(this.customData);
+
+            const result = await this.enzoic.addCredentialsAlertSubscription(this.username, this.password, this.customData);
+            expect(typeof (result.monitoredCredentialsID)).to.equal("string");
+            expect(result.monitoredCredentialsID.length).to.equal(24);
         });
 
-        it("gets correct result", function (done) {
-            enzoic.addCredentialsAlertSubscription(username, password, customData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(typeof (result.monitoredCredentialsID)).to.equal("string");
-                    expect(result.monitoredCredentialsID.length).to.equal(24);
-                    done();
-                }
-            );
+        let response1;
+
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getCredentialsAlertSubscriptions(4, null);
+            expect(result.count).to.greaterThan(1);
+            expect(result.monitoredCredentials.length).to.equal(result.count);
+            expect(result.pagingToken).to.not.equal(null);
+
+            // save off result for next call
+            response1 = result;
         });
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
 
-            bogusServer.addCredentialsAlertSubscription(username, password, customData,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+            try {
+                const result = await bogusServer.getCredentialsAlertSubscriptions(4, null);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 
-    describe("#deleteCredentialsAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var username = "UNIT_TEST_deleteCredentialsAlertSubscriptions@passwordping.com";
-        var password = "unittesttest";
-        var customData = "UNIT_TEST_deleteCredentialsAlertSubscriptions";
-
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
+    describe("#getCredentialsAlertSubscriptionsForUser()", async () => {
+        beforeEach(async () => {
+            this.username = "UNIT_TEST_getCredentialsAlertSubscriptionsForUser@passwordping.com";
+            this.password = "unittesttest";
+            this.customData = "UNIT_TEST_getCredentialsAlertSubscriptionsForUser";
         });
 
-        var newID;
-        it("adds test data", function (done) {
-            enzoic.addCredentialsAlertSubscription(username, password, customData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(typeof (result.monitoredCredentialsID)).to.equal("string");
-                    expect(result.monitoredCredentialsID.length).to.equal(24);
-                    newID = result.monitoredCredentialsID;
-                    done();
-                }
-            );
+        it("adds test data", async () => {
+            // delete all test data instances
+            await this.enzoic.deleteCredentialsAlertSubscriptionByCustomData(this.customData);
+
+            const result = await this.enzoic.addCredentialsAlertSubscription(this.username, this.password, this.customData);
+            expect(typeof (result.monitoredCredentialsID)).to.equal("string");
+            expect(result.monitoredCredentialsID.length).to.equal(24);
         });
 
-        it("gets correct result", function (done) {
-            enzoic.deleteCredentialsAlertSubscription(newID,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 1,
-                        notFound: 0
-                    });
-                    done();
-                }
-            );
+        it("gets correct result", async () => {
+            const result = await this.enzoic.getCredentialsAlertSubscriptionsForUser(this.username);
+            expect(result.count).to.equal(1);
+            expect(result.monitoredCredentials.length).to.equal(result.count);
+            expect(result.monitoredCredentials[0].usernameHash).to.equal(Hashing.sha256(this.username.toLowerCase()));
+            expect(result.monitoredCredentials[0].customData).to.equal(this.customData);
         });
 
-        it("gets correct repeated result", function (done) {
-            enzoic.deleteCredentialsAlertSubscription(newID,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result).to.deep.equal({
-                        deleted: 0,
-                        notFound: 1
-                    });
-                    done();
-                }
-            );
-        });
+        it("handles error properly", async () => {
+            const bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
 
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
-
-            bogusServer.deleteCredentialsAlertSubscription(newID,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
-        });
-    });
-
-    describe("#getCredentialsAlertSubscriptions()", function () {
-        var enzoic = getEnzoic();
-
-        var username = "UNIT_TEST_getCredentialsAlertSubscriptions@passwordping.com";
-        var password = "unittesttest";
-        var customData = "UNIT_TEST_getCredentialsAlertSubscriptions";
-
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-
-        it("adds test data", function (done) {
-            enzoic.addCredentialsAlertSubscription(username, password, customData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(typeof (result.monitoredCredentialsID)).to.equal("string");
-                    expect(result.monitoredCredentialsID.length).to.equal(24);
-                    done();
-                }
-            );
-        });
-
-        var response1;
-
-        it("gets correct result", function (done) {
-            enzoic.getCredentialsAlertSubscriptions(4, null,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.count).to.greaterThan(1);
-                    expect(result.monitoredCredentials.length).to.equal(result.count);
-                    expect(result.pagingToken).to.not.equal(null);
-
-                    // save off result for next call
-                    response1 = result;
-
-                    done();
-                }
-            );
-        });
-
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
-
-            bogusServer.getCredentialsAlertSubscriptions(4, null,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
-        });
-    });
-
-    describe("#getCredentialsAlertSubscriptionsForUser()", function () {
-        var enzoic = getEnzoic();
-
-        var username = "UNIT_TEST_getCredentialsAlertSubscriptionsForUser@passwordping.com";
-        var password = "unittesttest";
-        var customData = "UNIT_TEST_getCredentialsAlertSubscriptionsForUser";
-
-        // delete all test data instances
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-        enzoic.deleteCredentialsAlertSubscriptionByCustomData(customData, () => {
-        });
-
-        it("adds test data", function (done) {
-            enzoic.addCredentialsAlertSubscription(username, password, customData,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(typeof (result.monitoredCredentialsID)).to.equal("string");
-                    expect(result.monitoredCredentialsID.length).to.equal(24);
-                    done();
-                }
-            );
-        });
-
-        it("gets correct result", function (done) {
-            enzoic.getCredentialsAlertSubscriptionsForUser(username,
-                function (err, result) {
-                    expect(err).to.equal(null);
-                    expect(result.count).to.equal(1);
-                    expect(result.monitoredCredentials.length).to.equal(result.count);
-                    expect(result.monitoredCredentials[0].usernameHash).to.equal(Hashing.sha256(username.toLowerCase()));
-                    expect(result.monitoredCredentials[0].customData).to.equal(customData);
-                    done();
-                }
-            );
-        });
-
-        it("handles error properly", function (done) {
-            var bogusServer = new Enzoic(process.env.PP_API_KEY, process.env.PP_API_SECRET, "bogus.enzoic.com", process.env.PP_ENC_KEY);
-
-            bogusServer.getCredentialsAlertSubscriptionsForUser(username,
-                function (err, result) {
-                    expect(err).to.not.equal(null);
-                    expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
-                    done();
-                }
-            );
+            try {
+                const result = await bogusServer.getCredentialsAlertSubscriptionsForUser(this.username);
+            }
+            catch (err) {
+                expect(err).to.include("Unexpected error calling Enzoic API: getaddrinfo ENOTFOUND bogus.enzoic.com");
+            }
         });
     });
 });
