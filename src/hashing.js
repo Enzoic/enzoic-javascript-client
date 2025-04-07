@@ -6,6 +6,7 @@ const xor = require('bitwise-xor');
 const md5crypt = require('nano-md5');
 const descrypt = require('./descrypt');
 const unixcrypt = require("unixcrypt");
+const {md4, createWhirlpool} = require("hash-wasm");
 
 Hashing = {
     md5: function(sToHash, bBinary) {
@@ -33,11 +34,17 @@ Hashing = {
             return crypto.createHash('sha512').update(sToHash).digest("hex");
     },
 
-    whirlpool: function(sToHash, bBinary) {
-        if (bBinary === true)
-            return crypto.createHash('whirlpool').update(sToHash).digest('binary');
-        else
-            return crypto.createHash('whirlpool').update(sToHash).digest("hex");
+    whirlpool: async function(sToHash, bBinary) {
+        const whirlpool = await createWhirlpool();
+        whirlpool.init();
+        whirlpool.update(sToHash);
+
+        if (bBinary === true) {
+            return whirlpool.digest("binary");
+        }
+        else {
+            return whirlpool.digest("hex");
+        }
     },
 
     ipb_mybb: function(sPassword, sSalt) {
@@ -130,9 +137,9 @@ Hashing = {
         return sSalt + hashout;
     },
 
-    customAlgorithm1: function(sPassword, sSalt) {
+    customAlgorithm1: async function(sPassword, sSalt) {
         const hash1 = Hashing.sha512(sPassword + sSalt, false);
-        const hash2 = Hashing.whirlpool(sSalt + sPassword, false);
+        const hash2 = await Hashing.whirlpool(sSalt + sPassword, false);
         return xor(new Buffer(hash1, 'hex'), new Buffer(hash2, 'hex')).toString('hex');
     },
 
@@ -229,12 +236,13 @@ Hashing = {
     },
 
     ntlm: function(sPassword) {
-        let buf = new ArrayBuffer(sPassword.length*2);
-        let bufView = new Uint16Array(buf);
-        for (let i = 0, strLen=sPassword.length; i < strLen; i++) {
-            bufView[i] = sPassword.charCodeAt(i);
-        }
-        return new Buffer(crypto.createHash('md4').update(new Buffer(buf)).digest("")).toString("hex");
+        /* take MD4 hash of UCS-2 encoded password */
+        const ucs2 = new Buffer(sPassword, "ucs2");
+        return md4(ucs2);
+    },
+
+    md4: function(sPassword) {
+
     },
 
     sha384: function(sPassword) {
